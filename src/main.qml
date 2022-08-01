@@ -13,7 +13,7 @@ ApplicationWindow {
     visible: true
     width: 640
     height: 480
-    title: qsTr("Hello World")
+    title: qsTr("Генерация наборов данных")
 
     /* Number created buttons for her visual identification of the demonstration project
      */
@@ -69,8 +69,9 @@ ApplicationWindow {
 
             // Remove the button on its index in the ListView
             onClicked: {
-                if(textIndex.text != ""){
-                    listModel.remove(textIndex.text)
+                // if(textIndex.text != ""){
+                if (number != 0) {
+                    listModel.remove(--number)
                     textIndex.text = "" // Null text box with index
                 }
             }
