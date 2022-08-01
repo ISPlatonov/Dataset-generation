@@ -35,12 +35,7 @@ ApplicationWindow {
             text: qsTr("Загрузить список деталей")
             width: (parent.width / 3)
             height: 50
-
-            /* By clicking on the button to add the model ListView object
-             * with the specified parameters
-             * */
             onClicked: {
-                //listModel.append({idshnik: "Button " + (++number)})
 
             }
         }
@@ -49,29 +44,24 @@ ApplicationWindow {
             text: qsTr("Добавить деталь")
             width: (parent.width / 3)
             height: 50
-
-            /* By clicking on the button to add the model ListView object
-             * with the specified parameters
-             * */
             onClicked: {
-                listModel.append({idshnik: "Button " + (++number)})
+                listModel.append({idshnik: "TextEditor " + (++number)})
 
             }
         }
 
-        // Button to remove the dynamic buttons
+        // Button to remove the dynamic texteditors
         Button {
             id: button2
             text: qsTr("Удалить деталь")
             width: (parent.width / 3)
             height: 50
 
-            // Remove the button on its index in the ListView
+            // Remove the last texteditor
             onClicked: {
-                // if(textIndex.text != ""){
                 if (number != 0) {
                     listModel.remove(--number)
-                    textIndex.text = "" // Null text box with index
+                    textIndex.text = ""
                 }
             }
         }
@@ -95,7 +85,6 @@ ApplicationWindow {
             anchors.right: parent.right
             height: 40
             TextField {
-                //anchors.horizontalCenter: parent.horizontalCenter
                 anchors.fill: parent
                 anchors.margins: 3
                 height: 20
@@ -113,6 +102,7 @@ ApplicationWindow {
         }
     }
 }
+// Попытка сделать главную страницу и от неё топать, но осталась в черновиках
 //import QtQuick.Layouts 1.1
 //Window {
 //    width: 640
