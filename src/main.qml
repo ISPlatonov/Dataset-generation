@@ -3,10 +3,12 @@ import QtQuick.Window 2.12
 import QtQuick.Controls 2.0
 import QtQuick.Layouts 1.0
 /*
+Цель: страница по внесению названий деталей
+Сделано: добавляются новые поля ввода при нажатии на кнопку/EnterKey
++ удаляется последнее поле при нажатии на кнопку удаления
 Доделать:
 1) Перенос клика при создании нового поля (курсор в новом поле для ввода) + перемещение по клавишам "вверх-вниз"
 2) Загрузка списка деталей вместо ввода по полям - как аналог ввода
-
 */
 ApplicationWindow {
     visible: true
@@ -28,26 +30,24 @@ ApplicationWindow {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-
-        Rectangle {
-            width: (parent.width / 5)
+        Button {
+            id: button0
+            text: qsTr("Загрузить список деталей")
+            width: (parent.width / 3)
             height: 50
 
-            // Set the text box to accommodate the key index
-            Text {
-                id: textIndex
-                anchors.fill: parent
-                text: ""
-                verticalAlignment: Text.AlignVCenter
-                horizontalAlignment: Text.AlignHCenter
+            /* By clicking on the button to add the model ListView object
+             * with the specified parameters
+             * */
+            onClicked: {
+                //listModel.append({idshnik: "Button " + (++number)})
+
             }
         }
-
-        // Button to create dynamic buttons
         Button {
             id: button1
-            text: qsTr("Add detail")
-            width: (parent.width / 5)*2
+            text: qsTr("Добавить деталь")
+            width: (parent.width / 3)
             height: 50
 
             /* By clicking on the button to add the model ListView object
@@ -62,8 +62,8 @@ ApplicationWindow {
         // Button to remove the dynamic buttons
         Button {
             id: button2
-            text: qsTr("Delete detail")
-            width: (parent.width / 5)*2
+            text: qsTr("Удалить деталь")
+            width: (parent.width / 3)
             height: 50
 
             // Remove the button on its index in the ListView
