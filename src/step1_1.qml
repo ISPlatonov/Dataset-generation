@@ -2,10 +2,12 @@ import QtQuick 2.12
 import QtQuick.Window 2.12
 import QtQuick.Controls 2.0
 import QtQuick.Layouts 1.0
+import QtQuick.Dialogs 1.2
 /*
 Цель: страница по внесению названий деталей
 Сделано: добавляются новые поля ввода при нажатии на кнопку/EnterKey
 + удаляется последнее поле при нажатии на кнопку удаления
++ добавлена кнопка "Готово" и если список деталей не создан - появляется окно-подсказка при нажатии на нее
 Доделать:
 1) Перенос клика при создании нового поля (курсор в новом поле для ввода) + перемещение по клавишам "вверх-вниз"
 2) Загрузка списка деталей вместо ввода по полям - как аналог ввода
@@ -100,51 +102,32 @@ ApplicationWindow {
         model: ListModel {
             id: listModel
         }
+        Button {
+            id: button3
+            text: qsTr("Готово")
+            width: (parent.width / 3)
+            anchors.bottom: parent.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            height: 50
+
+
+            // Remove the last texteditor
+            onClicked: {
+                if (number != 0) {  // условие получше: существует >=1 непустое поле
+                    // можно добавить страницу с подтверждением списка деталей,
+                    // т.к. вдруг некоторые поля были пустые при нажатии кнопки/передан списка из .txt
+
+                    // переход к странице фотосъемки
+                } else {
+                    messagedialog.visible = true
+                }
+            }
+        }
+        MessageDialog {
+            id: messagedialog
+            title: "Ошибка заполнения"
+            text: "Добавьте названия деталей. Воспользуйтесь кнопкой \"Добавить деталь\" и введите название детали в появившееся поле."
+        }
     }
 }
-// Попытка сделать главную страницу и от неё топать, но осталась в черновиках
-//import QtQuick.Layouts 1.1
-//Window {
-//    width: 640
-//    height: 480
-//    visible: true
-//    title: qsTr("Генерация наборов данных")
-//    ColumnLayout {
-//        spacing: 10
-//        anchors.fill: parent
-//        anchors.margins: 25
-//        MyButton {
-//            id: button1
-//            text: "Сфотографировать детали"
-//            onClicked: {
-//                 button1.visible = false
-//               // anchors.fill = false
-//                button2.visible = false
-//                button3.visible = false
-//                Rectangle {
-//                    color: "red"
-//                    width: 100
-//                    height: 100
-//                }
-//            }
-//        }
-//        MyButton {
-//            id: button2
-//            text: "Получить маски деталей"
-//            onClicked: {
-//                button1.visible = false
-//                button2.visible = false
-//                button3.visible = false
-//            }
-//        }
-//        MyButton {
-//            id: button3
-//            text: "Сгенерировать наборы данных"
-//            onClicked: {
-//                button1.visible = false
-//                button2.visible = false
-//                button3.visible = false
-//            }
-//        }
-//    }
-//}
+
