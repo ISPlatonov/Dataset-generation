@@ -36,18 +36,18 @@ ApplicationWindow {
     Connections {
         target: mainLoader.item
         ignoreUnknownSignals: true
-        onGotoStep1: {
+        function onGotoStep1() {
             mainLoader.source = "step1list.qml"
         }
-        onGotoStep2: {
+        function onGotoStep2() {
             //mainLoader.source = "EditCamera.qml"
             console.log("page 2")
         }
-        onGotoStep3: {
+        function onGotoStep3() {
             //mainLoader.source = "CameraOptions.qml"
             console.log("page 3")
         }
-        onGotoMainView: {
+        function onGotoMainView() {
             mainLoader.source = "mainview.qml"
         }
         /*onLoadArray: {
