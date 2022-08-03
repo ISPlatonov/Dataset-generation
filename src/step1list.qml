@@ -27,6 +27,12 @@ Item {
     /* The string field that displays dynamically pressed the button index button
      * to create dynamic buttons, and a button to delete the index of dynamic buttons
      * */
+    QtObject {
+        id: d
+        property int itemHeight: root.height > root.width ? root.width / 10 : root.height / 10
+        property int buttonHeight: 0.8 * itemHeight
+        property int margins: 5
+    }
     Row {
         id: row
         // Set line size and nailed to the top of the application window
@@ -104,7 +110,7 @@ Item {
         model: ListModel {
             id: listModel
         }
-        Button {
+        MyButton {
             id: button3
             text: qsTr("Готово")
             width: (parent.width / 3)
@@ -115,16 +121,38 @@ Item {
 
             // Remove the last texteditor
             onClicked: {
-                if (number != 0) {  // условие получше: существует >=1 непустое поле
-                    // можно добавить страницу с подтверждением списка деталей,
-                    // т.к. вдруг некоторые поля были пустые при нажатии кнопки/передан списка из .txt
-
-                    // переход к странице фотосъемки
-                } else {
+                if (number != 0) {
+                        loader.setSource("main.qml")
+                        button1.visible = true
+                        button2.visible = true
+                        button3.visible = true
+                    } else {
                     messagedialog.visible = true
                 }
             }
         }
+        MyButton {
+            id: button4
+            text: qsTr("Назад")
+            width: (parent.width / 6)
+            anchors.margins: 10
+          //  anchors.bottom: parent.bottom
+            anchors.right: parent.right
+            height: 0.6 * button3.height
+            anchors.verticalCenter: button3.verticalCenter
+            // Remove the last texteditor
+            onClicked: {
+                        loader.setSource("main.qml")
+                        button1.visible = true
+                        button2.visible = true
+                        button3.visible = true
+            }
+        }
+        Loader {
+            id: nextloader
+            anchors.fill: parent
+        }
+
         MessageDialog {
             id: messagedialog
             title: "Ошибка заполнения"

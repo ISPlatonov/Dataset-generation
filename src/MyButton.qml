@@ -8,6 +8,7 @@ Rectangle {
     Layout.fillWidth: true
     width: 200
     height: 100
+    radius: 5
     border {
         color: "grey"
         width: 1

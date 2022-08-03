@@ -3,6 +3,10 @@ import QtQuick.Window 2.12
 import QtQuick.Controls 2.0
 import QtQuick.Dialogs 1.2
 // Попытка сделать главную страницу
+/*
+1) Изменить кнопку "назад" так, чтобы не открывалось новое окно
+2) Добавить скрипт с камерой и соединить его со скриптом про список
+*/
 import QtQuick.Layouts 1.1
 ApplicationWindow {
     width: 640
@@ -17,7 +21,7 @@ ApplicationWindow {
             id: button1
             text: "Сфотографировать детали"
             onClicked: {
-                loader.setSource("step1_1.qml")
+                loader.setSource("step1list.qml")
                 button1.visible = false
                 button2.visible = false
                 button3.visible = false
@@ -44,10 +48,11 @@ ApplicationWindow {
 //            }
         }
         // Loader для загрузки страниц
-        Loader {
-            id: loader
-            anchors.fill: parent
-        }
 
+
+    }
+    Loader {
+        id: loader
+        anchors.fill: parent
     }
 }
