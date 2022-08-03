@@ -1,36 +1,47 @@
 import QtQuick 2.12
-import QtQuick.Window 2.12
-import QtQuick.Controls 2.0
-import QtQuick.Dialogs 1.2
-// Попытка сделать главную страницу
-/*
-1) Изменить кнопку "назад" так, чтобы не открывалось новое окно
-2) Добавить скрипт с камерой и соединить его со скриптом про список
-*/
+import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.1
-ApplicationWindow {
-    width: 640
-    height: 480
+
+import "."
+
+
+Item {
+    id: mainview
+    anchors.fill: parent
     visible: true
-    title: qsTr("Генерация наборов данных")
+
+    signal gotoStep1()
+    signal gotoStep2()
+    signal gotoStep3()
+
     ColumnLayout {
         spacing: 10
         anchors.fill: parent
         anchors.margins: 25
-        MyButton {
+        Button {
             id: button1
             text: "Сфотографировать детали"
+            Layout.fillWidth: true
+            width: 200
+            height: 100
             onClicked: {
-                loader.setSource("step1list.qml")
-                button1.visible = false
+                mainview.gotoStep1()
+                console.log("button 1 is pressed")
+                /*button1.visible = false
                 button2.visible = false
-                button3.visible = false
+                button3.visible = false*/
             }
         }
-        MyButton {
+        Button {
             id: button2
             text: "Получить маски деталей"
-           // onClicked: {
+            Layout.fillWidth: true
+            width: 200
+            height: 100
+            onClicked: {
+                mainview.gotoStep2()
+            }
+
 //                  loader.source = "step1_1.qml"
 //
 //                button1.visible = false
@@ -38,21 +49,20 @@ ApplicationWindow {
 //                button3.visible = false
 //            }
         }
-        MyButton {
+        Button {
             id: button3
             text: "Сгенерировать наборы данных"
-//            onClicked: {
+            Layout.fillWidth: true
+            width: 200
+            height: 100
+            onClicked: {
+                mainview.gotoStep3()
+            }
+
 //                button1.visible = false
 //                button2.visible = false
 //                button3.visible = false
 //            }
         }
-        // Loader для загрузки страниц
-
-
-    }
-    Loader {
-        id: loader
-        anchors.fill: parent
     }
 }
