@@ -23,16 +23,12 @@ Item {
     /* Number created buttons for her visual identification of the demonstration project
      */
     property int number: 0
+    id: rootItem
 
     /* The string field that displays dynamically pressed the button index button
      * to create dynamic buttons, and a button to delete the index of dynamic buttons
      * */
-    QtObject {
-        id: d
-        property int itemHeight: root.height > root.width ? root.width / 10 : root.height / 10
-        property int buttonHeight: 0.8 * itemHeight
-        property int margins: 5
-    }
+
     Row {
         id: row
         // Set line size and nailed to the top of the application window
@@ -122,7 +118,7 @@ Item {
             // Remove the last texteditor
             onClicked: {
                 if (number != 0) {
-                        loader.setSource("main.qml")
+                        loader.setSource("step1camera.qml")
                         button1.visible = true
                         button2.visible = true
                         button3.visible = true
@@ -157,6 +153,22 @@ Item {
             id: messagedialog
             title: "Ошибка заполнения"
             text: "Добавьте названия деталей. Воспользуйтесь кнопкой \"Добавить деталь\" и введите название детали в появившееся поле."
+        }
+        Component {
+            id: rightDelegate
+            Item {
+                width: rootItem.width
+                height: 0.8 * itemHeight
+
+                Button {
+                    anchors.fill: parent
+                    anchors.margins: 5
+                    anchors.leftMargin: 2.5
+                    anchors.bottomMargin: 0
+                    text: name
+                    onClicked: rootItem.sceneSource = source
+                }
+            }
         }
     }
 }

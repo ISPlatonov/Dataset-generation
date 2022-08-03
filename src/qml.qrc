@@ -3,7 +3,6 @@
         <file>step1list.qml</file>
         <file>main.qml</file>
         <file>MyButton.qml</file>
-        <file>SceneSelectionPanel.qml</file>
         <file>step1camera.qml</file>
     </qresource>
 </RCC>
