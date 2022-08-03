@@ -12,11 +12,13 @@ import QtQuick.Dialogs 1.2
 1) Перенос клика при создании нового поля (курсор в новом поле для ввода) + перемещение по клавишам "вверх-вниз"
 2) Загрузка списка деталей вместо ввода по полям - как аналог ввода
 */
-ApplicationWindow {
-    visible: true
-    width: 640
-    height: 480
-    title: qsTr("Генерация наборов данных")
+//ApplicationWindow {
+//    visible: true
+//    width: 640
+//    height: 480
+//    title: qsTr("Генерация наборов данных")
+Item {
+//    anchors.fill: parent
 
     /* Number created buttons for her visual identification of the demonstration project
      */
