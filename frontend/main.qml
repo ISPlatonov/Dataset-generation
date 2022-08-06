@@ -22,7 +22,8 @@ ApplicationWindow {
     title: qsTr("Dataset generator")
 
     // temp array for 1st step
-    property var firstStepArray: ['qwe', 'wer', 'ert']
+    //property var firstStepArray: ['qwe', 'wer', 'ert']
+    property var name_list: manager.name_list
 
     Loader {
         id: mainLoader
@@ -37,36 +38,36 @@ ApplicationWindow {
         target: mainLoader.item
         ignoreUnknownSignals: true
         function onGotoStep1() {
-            mainLoader.source = "step1list.qml"
+            mainLoader.source = "step 1/list.qml"
         }
         function onGotoStep2() {
-            mainLoader.source = "step2dir.qml"
+            mainLoader.source = "step 2/dir.qml"
             console.log("page 2")
         }
         function onGotoStep3() {
-            mainLoader.source = "step3dir.qml"
+            mainLoader.source = "step 3/dir.qml"
             console.log("page 3")
         }
         function onGotoMainView() {
             mainLoader.source = "mainview.qml"
         }
         function onGotoChoosingDir() {
-            mainLoader.source = "step1dir.qml"
+            mainLoader.source = "step 1/dir.qml"
         }
         function onGotoCamera() {
-            mainLoader.source = "step1camera.qml"
+            mainLoader.source = "step 1/camera.qml"
         }
         function onMakeSnapshoot(name) {
             // name snapshot
         }
         function onGotoThreshold() {
-            mainLoader.source = "step2threshold.qml"
+            mainLoader.source = "step 2/threshold.qml"
         }
         function onGotoBacks() {
-            mainLoader.source = "step3backs.qml"
+            mainLoader.source = "step 3/backs.qml"
         }
         function onGotoGeneration() {
-            mainLoader.source = "step3generation.qml"
+            mainLoader.source = "step 3/generation.qml"
         }
         /*onLoadArray: {
             item.getArray(mainrect.firstStepArray)
