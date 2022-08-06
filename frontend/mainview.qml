@@ -27,9 +27,6 @@ Item {
             onClicked: {
                 mainview.gotoStep1()
                 console.log("button 1 is pressed")
-                /*button1.visible = false
-                button2.visible = false
-                button3.visible = false*/
             }
         }
         Button {
@@ -40,14 +37,8 @@ Item {
             height: 100
             onClicked: {
                 mainview.gotoStep2()
+                console.log("button 2 is pressed")
             }
-
-//                  loader.source = "step1_1.qml"
-//
-//                button1.visible = false
-//                button2.visible = false
-//                button3.visible = false
-//            }
         }
         Button {
             id: button3
@@ -57,12 +48,8 @@ Item {
             height: 100
             onClicked: {
                 mainview.gotoStep3()
+                console.log("button 3 is pressed")
             }
-
-//                button1.visible = false
-//                button2.visible = false
-//                button3.visible = false
-//            }
         }
     }
 }

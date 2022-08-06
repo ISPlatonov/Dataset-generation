@@ -40,15 +40,33 @@ ApplicationWindow {
             mainLoader.source = "step1list.qml"
         }
         function onGotoStep2() {
-            //mainLoader.source = "EditCamera.qml"
+            mainLoader.source = "step2dir.qml"
             console.log("page 2")
         }
         function onGotoStep3() {
-            //mainLoader.source = "CameraOptions.qml"
+            mainLoader.source = "step3dir.qml"
             console.log("page 3")
         }
         function onGotoMainView() {
             mainLoader.source = "mainview.qml"
+        }
+        function onGotoChoosingDir() {
+            mainLoader.source = "step1dir.qml"
+        }
+        function onGotoCamera() {
+            mainLoader.source = "step1camera.qml"
+        }
+        function onMakeSnapshoot(name) {
+            // name snapshot
+        }
+        function onGotoThreshold() {
+            mainLoader.source = "step2threshold.qml"
+        }
+        function onGotoBacks() {
+            mainLoader.source = "step3backs.qml"
+        }
+        function onGotoGeneration() {
+            mainLoader.source = "step3generation.qml"
         }
         /*onLoadArray: {
             item.getArray(mainrect.firstStepArray)
