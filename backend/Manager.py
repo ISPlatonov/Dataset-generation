@@ -1,11 +1,12 @@
 from tkinter import N
 from PySide2.QtCore import Property, QCoreApplication, QObject, Qt, Signal, QStringListModel, QJsonValue, Slot
-import json
+import json, os
 
 
 class Manager(QObject):
     #makeSnapshot = Signal()
     nameListChanged = Signal()
+    imagesPathChanged = Signal()
 
     def __init__(self):
         super(Manager, self).__init__()
@@ -14,6 +15,8 @@ class Manager(QObject):
         # for testing only!
         self._name_list = self.config['name_list']
         self.nameListChanged.emit()
+        self._images_path = self.config['images_path']
+        self.imagesPathChanged.emit()
     
     #@Slot("QVariant")
     #def make_snapshots_step(self, name_list):
@@ -29,6 +32,7 @@ class Manager(QObject):
     @Slot("QVariant")
     def addName(self, name):
         if name in self._name_list:
+            self.nameListChanged.emit()
             return
         self._name_list.append(name)
         self.nameListChanged.emit()
@@ -44,8 +48,23 @@ class Manager(QObject):
     @Slot("QVariant")
     def removeName(self, name):
         if name not in self._name_list:
+            self.nameListChanged.emit()
             return
         self._name_list.remove(name)
         self.nameListChanged.emit()
     
+    def get_images_path(self):
+        return os.path.abspath(self._images_path)
+    
+    def set_images_path(self, path):
+        self._images_path = path
+        self.imagesPathChanged.emit()
+
+    @Slot("QVariant")
+    def makeDir(self, dirname):
+        if dirname in os.listdir(self.get_images_path()):
+            return
+        os.mkdir(self.get_images_path() + '/' + dirname)
+    
     name_list = Property("QVariantList", fget=get_name_list, fset=set_name_list, notify=nameListChanged)
+    images_path = Property("QVariant", fget=get_images_path, fset=set_images_path, notify=imagesPathChanged)

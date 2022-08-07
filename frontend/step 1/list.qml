@@ -31,18 +31,27 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         Button {
+            // llbe fixed later
             id: button0
             text: qsTr("Загрузить список деталей")
-            width: (parent.width / 2)
+            width: (parent.width / 3)
             height: parent.height
             onClicked: listDialog.open()
         }
         Button {
+            id: button1
+            text: qsTr("Добавить новую деталь")
+            width: (parent.width / 3)
+            height: parent.height
+            onClicked: manager.addName("")
+        }
+        Button {
             id: button2
             text: qsTr("Удалить деталь")
-            width: (parent.width / 2)
+            width: (parent.width / 3)
             height: parent.height
             onClicked: {
+                console.log("removing " + manager.name_list[focusedItemIndex] + " on index " + focusedItemIndex)
                 manager.removeName(manager.name_list[focusedItemIndex])
             }
         }
@@ -91,7 +100,7 @@ Item {
                     }
                     onFocusChanged: {
                         if (focus) {
-                            focusedItemIndex: index
+                            focusedItemIndex = index
                             console.log("focusedItemIndex: " + index)
                         }
                     }
@@ -118,9 +127,10 @@ Item {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             onClicked: {
-                if (number != 0) {
+                console.log("manager.name_list.length: " + manager.name_list.length)
+                if (manager.name_list.length > 1) {
                     step1list.gotoCamera()
-                    } else {
+                } else {
                     messagedialog.visible = true
                 }
             }
@@ -133,10 +143,6 @@ Item {
             anchors.left: parent.left
             anchors.bottom: parent.bottom
             onClicked: step1list.gotoMainView()
-        }
-        Loader {
-            id: nextloader
-            anchors.fill: parent
         }
         FileDialog {
             id: listDialog

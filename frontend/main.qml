@@ -59,6 +59,8 @@ ApplicationWindow {
         }
         function onMakeSnapshoot(name) {
             // name snapshot
+
+            //return step1camera.index
         }
         function onGotoThreshold() {
             mainLoader.source = "step 2/threshold.qml"
