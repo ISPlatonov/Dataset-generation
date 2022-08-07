@@ -20,73 +20,96 @@ Item {
     signal gotoMainView()
     signal gotoChoosingDir()
     signal gotoCamera()
-    property int number: 0
+
+    property int focusedItemIndex
     
     Row {
         id: row
         height: 50
+        spacing: 10
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
         Button {
             id: button0
             text: qsTr("Загрузить список деталей")
-            width: (parent.width / 3)
-            height: 50
+            width: (parent.width / 2)
+            height: parent.height
             onClicked: listDialog.open()
-        }
-        Button {
-            id: button1
-            text: qsTr("Добавить деталь")
-            width: (parent.width / 3)
-            height: 50
-            onClicked: {
-                listModel.append({idshnik: "TextEditor " + (++number)})
-
-            }
         }
         Button {
             id: button2
             text: qsTr("Удалить деталь")
-            width: (parent.width / 3)
-            height: 50
+            width: (parent.width / 2)
+            height: parent.height
             onClicked: {
-                if (number != 0) {
-                    listModel.remove(--number)
-                    textIndex.text = ""
+                manager.removeName(manager.name_list[focusedItemIndex])
+            }
+        }
+    }
+
+    // ScrollView is needed
+    ColumnLayout {
+        id: columnLayout1
+        anchors.top: row.bottom
+        //anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        //spacing: 20
+        visible: true
+
+        Repeater {
+            id: columnLayout1Repeater
+            model: manager.name_list
+            visible: true
+
+            onItemAdded: {
+                manager.addName("")
+                item.focus = true
+                console.log("onItemAdded")
+            }
+
+            Rectangle {
+                id: columnLayout1RepeaterRect
+                visible: true
+                Layout.preferredWidth: columnLayout1.width - 10
+                Layout.preferredHeight: columnLayout1.width * .05
+                Layout.margins: 5
+                Layout.topMargin: 15
+                TextField  {
+                    id: columnLayout1RepeaterRectTextField
+                    anchors.centerIn: parent
+                    width: parent.width
+                    text: qsTr(model.modelData)
+                    visible: true
+                    focus: parent.focus
+                    placeholderText: "Введите название новой детали"
+                    onAccepted: {
+                        manager.changeName(index, text)
+                        console.log(text + " changed")
+                        console.log("\"" + manager.name_list + "\"")
+                    }
+                    onFocusChanged: {
+                        if (focus) {
+                            focusedItemIndex: index
+                            console.log("focusedItemIndex: " + index)
+                        }
+                    }
+                }
+                Component.onCompleted: {
+                    console.log("repeater done")
                 }
             }
         }
     }
 
-    ListView {
-        id: listView1
-        anchors.top: row.bottom
+    Rectangle {
+        id: bottom
+        height: 50
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
 
-        delegate: Item {
-            id: item
-            anchors.left: parent.left
-            anchors.right: parent.right
-            height: 40
-            TextField {
-                anchors.fill: parent
-                anchors.margins: 3
-                height: 20
-                Keys.onReturnPressed: {
-                    listModel.append({idshnik: "Button " + (++number)})
-                    textIndex.text = index
-
-                }
-
-            }
-        }
-
-        model: ListModel {
-            id: listModel
-        }
         Button {
             id: button3
             text: qsTr("Готово")

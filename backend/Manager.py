@@ -1,3 +1,4 @@
+from tkinter import N
 from PySide2.QtCore import Property, QCoreApplication, QObject, Qt, Signal, QStringListModel, QJsonValue, Slot
 import json
 
@@ -24,5 +25,27 @@ class Manager(QObject):
     
     def get_name_list(self):
         return self._name_list
+    
+    @Slot("QVariant")
+    def addName(self, name):
+        if name in self._name_list:
+            return
+        self._name_list.append(name)
+        self.nameListChanged.emit()
+    
+    @Slot("QVariant", "QVariant")
+    def changeName(self, index, name):
+        if name in self._name_list:
+            self.nameListChanged.emit()
+            return
+        self._name_list[index] = name
+        self.nameListChanged.emit()
+    
+    @Slot("QVariant")
+    def removeName(self, name):
+        if name not in self._name_list:
+            return
+        self._name_list.remove(name)
+        self.nameListChanged.emit()
     
     name_list = Property("QVariantList", fget=get_name_list, fset=set_name_list, notify=nameListChanged)
