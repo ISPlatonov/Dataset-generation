@@ -2,6 +2,8 @@ from tkinter import N
 from PySide2.QtCore import Property, QCoreApplication, QObject, Qt, Signal, QStringListModel, QJsonValue, Slot
 import json, os
 
+from backend.HandSegmentor import HandSegmentor
+
 
 class Manager(QObject):
     #makeSnapshot = Signal()
@@ -17,6 +19,7 @@ class Manager(QObject):
         self.nameListChanged.emit()
         self._images_path = self.config['images_path']
         self.imagesPathChanged.emit()
+        self.hs = HandSegmentor(self.config)
     
     #@Slot("QVariant")
     #def make_snapshots_step(self, name_list):
@@ -65,6 +68,10 @@ class Manager(QObject):
         if dirname in os.listdir(self.get_images_path()):
             return
         os.mkdir(self.get_images_path() + '/' + dirname)
+    
+    @Slot()
+    def handSegmentor(self):
+        self.hs.main_job()
     
     name_list = Property("QVariantList", fget=get_name_list, fset=set_name_list, notify=nameListChanged)
     images_path = Property("QVariant", fget=get_images_path, fset=set_images_path, notify=imagesPathChanged)

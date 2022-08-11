@@ -1,4 +1,9 @@
 {
     "images_path": "images",
-    "name_list": ["biba", "boba", "bebra"]
+    "name_list": ["biba", "boba", "bebra"],
+
+    "filepath": "images/",
+    "filename": "biba/0.jpg",
+    "empty_table_photo_name_": "empty_table.jpg",
+    "need_hand": false
 }

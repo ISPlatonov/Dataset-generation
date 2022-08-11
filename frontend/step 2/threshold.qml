@@ -12,6 +12,8 @@ Item {
     id: step2threshold
     signal gotoMainView()
     signal gotoStep2()
+    signal gotoStep3()
+    //signal handSegmentor()
     Image {
         id: photoPreview
         width: parent.width
@@ -27,7 +29,8 @@ Item {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         onClicked: {
-            step2threshold.gotoMainView()
+            manager.handSegmentor()
+            gotoStep3()
         }
     }
     Button {
