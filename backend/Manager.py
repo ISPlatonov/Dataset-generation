@@ -3,12 +3,14 @@ from PySide2.QtCore import Property, QCoreApplication, QObject, Qt, Signal, QStr
 import json, os
 
 from backend.HandSegmentor import HandSegmentor
+from backend.BackgroundImposing.filtration import Filtration
 
 
 class Manager(QObject):
     #makeSnapshot = Signal()
     nameListChanged = Signal()
     imagesPathChanged = Signal()
+
 
     def __init__(self):
         super(Manager, self).__init__()
@@ -20,18 +22,23 @@ class Manager(QObject):
         self._images_path = self.config['images_path']
         self.imagesPathChanged.emit()
         self.hs = HandSegmentor(self.config)
+        self.filter = Filtration(self.config)
     
+
     #@Slot("QVariant")
     #def make_snapshots_step(self, name_list):
     #    msg = name_list.toVariant()
     
+
     def set_name_list(self, name_list):
         self._name_list = name_list
         self.nameListChanged.emit()
     
+
     def get_name_list(self):
         return self._name_list
     
+
     @Slot("QVariant")
     def addName(self, name):
         if name in self._name_list:
@@ -40,6 +47,7 @@ class Manager(QObject):
         self._name_list.append(name)
         self.nameListChanged.emit()
     
+
     @Slot("QVariant", "QVariant")
     def changeName(self, index, name):
         if name in self._name_list:
@@ -48,6 +56,7 @@ class Manager(QObject):
         self._name_list[index] = name
         self.nameListChanged.emit()
     
+
     @Slot("QVariant")
     def removeName(self, name):
         if name not in self._name_list:
@@ -56,12 +65,15 @@ class Manager(QObject):
         self._name_list.remove(name)
         self.nameListChanged.emit()
     
+
     def get_images_path(self):
         return os.path.abspath(self._images_path)
     
+
     def set_images_path(self, path):
         self._images_path = path
         self.imagesPathChanged.emit()
+
 
     @Slot("QVariant")
     def makeDir(self, dirname):
@@ -69,9 +81,16 @@ class Manager(QObject):
             return
         os.mkdir(self.get_images_path() + '/' + dirname)
     
+
     @Slot()
     def handSegmentor(self):
         self.hs.main_job()
+    
+
+    @Slot()
+    def filtration(self):
+        self.filter.main_job()
+
     
     name_list = Property("QVariantList", fget=get_name_list, fset=set_name_list, notify=nameListChanged)
     images_path = Property("QVariant", fget=get_images_path, fset=set_images_path, notify=imagesPathChanged)

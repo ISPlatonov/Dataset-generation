@@ -4,6 +4,8 @@
 
     "filepath": "images/",
     "filename": "biba/0.jpg",
+    "backgrounds": "images/backgrounds",
+    "processed_path": "images/processed",
     "empty_table_photo_name_": "empty_table.jpg",
     "need_hand": false
 }

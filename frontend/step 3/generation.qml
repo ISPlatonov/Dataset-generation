@@ -42,7 +42,11 @@ Item {
         anchors.margins: 20
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        onClicked: step3generation.gotoMainView()
+        onClicked: {
+            manager.filtration()
+            // further...
+            step3generation.gotoMainView()
+        }
     }
     Loader {
         id: dirloader
