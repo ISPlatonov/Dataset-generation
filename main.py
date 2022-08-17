@@ -4,7 +4,7 @@ from PySide2.QtCore import Property, QCoreApplication, QObject, Qt, Signal, QStr
 
 import json, sys, signal, time, re, sys
 
-from backend.manager import Manager
+from backend.Manager import Manager
 
 
 if __name__ == "__main__":

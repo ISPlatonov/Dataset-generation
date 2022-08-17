@@ -37,6 +37,8 @@ class HandSegmentor:
         self.need_hand = config["need_hand"]
 
         names_list = os.listdir(self.filepath)
+        if 'backgrounds' in names_list:
+            names_list.remove('backgrounds')
         if 'Blank_surface' in names_list:
             names_list.remove('Blank_surface')
         if 'processed' in names_list:

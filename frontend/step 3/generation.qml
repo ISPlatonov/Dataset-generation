@@ -44,7 +44,7 @@ Item {
         anchors.bottom: parent.bottom
         onClicked: {
             manager.filtration()
-            // further...
+            manager.backsGeneration()
             step3generation.gotoMainView()
         }
     }

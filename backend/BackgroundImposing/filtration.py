@@ -68,7 +68,7 @@ class Filtration:
         :return: name - имя маски
         """
         num_zeros = int(3 - log10(i + 0.1))
-        name = self.processed_path + detail + '_' + '0' * num_zeros + str(i) + '/' + detail + '_' + \
+        name = self.processed_path + '/' + detail + '_' + '0' * num_zeros + str(i) + '/' + detail + '_' + \
             '0' * num_zeros + str(i) + '_detail_bw_mask.jpg'
         return name
 
@@ -93,7 +93,7 @@ class Filtration:
         :return: list(1000), list(1000)
         """
         details_names, masks_names = list(), list()
-        for i in range(1, 1000):
+        for i in range(1000):
             details_names.append(self.generate_detail_name(detail, i))
             masks_names.append(self.generate_mask_name(detail, i))
         return details_names, masks_names
@@ -135,14 +135,14 @@ class Filtration:
             count = 0
             detail = all_details_names[i]
             details_names, masks_names = self.get_names_of_detail(detail)
-            j = 1
+            j = 0
             num_zeros1 = '0' * int(3 - log10(j + 0.1))
-            iter = os.path.exists(f'self.processed_path{detail}_{num_zeros1}{j}')
+            iter = os.path.exists(f'{self.processed_path}/{detail}_{num_zeros1}{j}')
             while iter:
                 j += 1
                 num_zeros1 = '0' * int(3 - log10(j + 0.1))
                 try:
-                    iter = os.path.exists(f'self.processed_path{detail}_{num_zeros1}{j}')
+                    iter = os.path.exists(f'{self.processed_path}/{detail}_{num_zeros1}{j}')
                 except:
                     j += 1
                     break
@@ -154,7 +154,8 @@ class Filtration:
                 if flag == 1:
                     count += 1
                     num_zeros1 = '0' * int(3 - log10(j + 0.1))
-                    shutil.rmtree(f'self.processed_path{detail}_{num_zeros1}{j}')
+                    print(f'removing: {self.processed_path}/{detail}_{num_zeros1}{j}')
+                    shutil.rmtree(f'{self.processed_path}/{detail}_{num_zeros1}{j}')
 
 
     def countour_check(self, all_details_names):
@@ -168,7 +169,7 @@ class Filtration:
             all_count = 0
             detail = all_details_names[i]
             details_names, masks_names = self.get_names_of_detail(detail)
-            j = 1
+            j = 0
             num_zeros1 = '0' * int(3 - log10(j + 0.1))
             iter = os.path.exists(f'self.processed_path{detail}_{num_zeros1}{j}')
             while iter:
@@ -218,7 +219,7 @@ class Filtration:
         """
         for i in range(len(all_details_names)):
             detail = all_details_names[i]
-            j = 1
+            j = 0
             count = 0
             flag = 0
             iter, j, flag = self.stop_start_iter(detail, j, flag)

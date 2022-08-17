@@ -1,9 +1,11 @@
 from tkinter import N
 from PySide2.QtCore import Property, QCoreApplication, QObject, Qt, Signal, QStringListModel, QJsonValue, Slot
 import json, os
+from time import sleep
 
 from backend.HandSegmentor import HandSegmentor
 from backend.BackgroundImposing.filtration import Filtration
+from backend.BackgroundImposing.generation_backs import BacksGeneration
 
 
 class Manager(QObject):
@@ -23,6 +25,7 @@ class Manager(QObject):
         self.imagesPathChanged.emit()
         self.hs = HandSegmentor(self.config)
         self.filter = Filtration(self.config)
+        self.bg = BacksGeneration(self.config)
     
 
     #@Slot("QVariant")
@@ -90,6 +93,16 @@ class Manager(QObject):
     @Slot()
     def filtration(self):
         self.filter.main_job()
+    
+
+    @Slot()
+    def backsGeneration(self):
+        self.bg.main_job()
+    
+
+    @Slot("QVariant")
+    def sleepFor(self, secs):
+        sleep(secs)
 
     
     name_list = Property("QVariantList", fget=get_name_list, fset=set_name_list, notify=nameListChanged)

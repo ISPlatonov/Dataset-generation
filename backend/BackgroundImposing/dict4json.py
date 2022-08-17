@@ -1,6 +1,7 @@
 import cv2
 import json
 
+
 def img_with_rectangle(img, rect):
     """
     Функция отрисовки прямоугольникоизображении
@@ -12,16 +13,6 @@ def img_with_rectangle(img, rect):
                               (rect[2], rect[3]),
                               color=(0, 0, 255), thickness=1)
 
-labels = [{"id": 1, "name": "batman"}, {"id": 2, "name": "bolshoy_grover"},
-              {"id": 3, "name": "bolshoy_podshipnik"}, {"id": 4, "name": "dvernoye_koltso"},
-              {"id": 5, "name": "grib"}, {"id": 6, "name": "koltso"},
-              {"id": 7, "name": "krylo"}, {"id": 8, "name": "malenkiy_podshipnik"},
-              {"id": 9, "name": "nlo"}, {"id": 10, "name": "pruzhina"},
-              {"id": 11, "name": "roochka"}, {"id": 12, "name": "shesterenka"},
-              {"id": 13, "name": "sterzhen"}, {"id": 14, "name": "tolstaya_gayka"},
-              {"id": 15, "name": "tolstaya_shaiba"}, {"id": 16, "name": "tolstoye_koltso"},
-              {"id": 17, "name": "tonkaya_gayka"}, {"id": 18, "name": "tonkaya_shaiba"},
-              {"id": 19, "name": "vint"}, {"id": 20, "name": "vtulka"}, {"id": 21, "name": "hand"}]
 
 def get_category_id(detail):
     """
@@ -45,6 +36,7 @@ def get_category_id(detail):
         raise Exception("No such name in dict")
     return category_id
 
+
 def part_dict(id, is_crowd, category_id, yolo_points):
     """
     Функция создания словаря, соотвествующего полю "annotations" в json
@@ -64,6 +56,7 @@ def part_dict(id, is_crowd, category_id, yolo_points):
                    "area": 0.0
                }
     return part_dict
+
 
 def get_yolo_points(points):
     """
@@ -86,6 +79,7 @@ def get_yolo_points(points):
     yolo_points = [float(min(x)), float(min(y)), float(max(x)), float(max(y))]
     return yolo_points
 
+
 def create_json_dictionary(img, file_name, yolo_points, category_id, ID, is_crowd):
     """
     Функция создания json-словаря.
@@ -105,7 +99,8 @@ def create_json_dictionary(img, file_name, yolo_points, category_id, ID, is_crow
     my_dict["annotations"].append(p)
     return my_dict
 
-def edit_json_dictionary(my_dict, flag, id, is_crowd, category_id, yolo_points):
+
+def edit_json_dictionary(my_dict, flag, id, is_crowd, category_id, yolo_points, names_list):
     """
     Функция редактирования словаря: добавление поля annotations.
     :param my_dict: dictionary
@@ -122,10 +117,15 @@ def edit_json_dictionary(my_dict, flag, id, is_crowd, category_id, yolo_points):
         my_dict["annotations"] = []
         my_dict["annotations"].append(part_dict(id, is_crowd, category_id, yolo_points))
     if flag == 1:
+        labels = list()
+        for i in range(len(names_list)):
+            labels.append({'id':str(i), 'name': names_list[i]})
+        #labels.append({'id':str(len(names_list)), 'name': 'hand'})
         my_dict["categories"] = labels
     return my_dict
 
-def writing_in_json(detail_num, img, detail_name, id, approx, count, d):
+
+def writing_in_json(detail_num, img, detail_name, id, approx, count, d, names_list):
     """
     Функция создания/редактирования словаря - в зависимости от случая.
     :param detail_num: int
@@ -150,10 +150,11 @@ def writing_in_json(detail_num, img, detail_name, id, approx, count, d):
         flag = 0
         if detail_num + 1 == count:
             flag = 1
-        edit_json_dictionary(d, flag, id, is_crowd, category_id, yolo_points)
+        edit_json_dictionary(d, flag, id, is_crowd, category_id, yolo_points, names_list)
     with open(f'{dir_name}img_{id}.json', 'w') as outfile:
         json.dump(d, outfile)
     return d
+
 
 def write_yolo_txt(d, file_name, a):
     """
