@@ -18,10 +18,13 @@ Item {
         }
         text: manager.photo_num
         focus: true
+        horizontalAlignment: TextInput.AlignHCenter
+        verticalAlignment: TextInput.AlignVCenter
+        font.pointSize: 24
         width: (parent.width / 2)
         anchors.centerIn: parent
         height: manager.config.graphics.unit_height
-        onAccepted: {
+        onTextEdited: {
             manager.photo_num = text
             console.log("photo num = " + text)
         }
