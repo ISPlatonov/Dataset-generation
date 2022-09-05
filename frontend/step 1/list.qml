@@ -1,9 +1,9 @@
-import QtQuick 2.12
-import QtQuick.Window 2.12
-import QtQuick.Controls 2.0
-import QtQuick.Layouts 1.0
-import QtQuick.Dialogs 1.2
-import QtQml 2.0
+import QtQuick
+import QtQuick.Window
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQuick.Dialogs
+import QtQml
 
 import "."
 /*
@@ -25,8 +25,8 @@ Item {
     
     Row {
         id: row
-        height: 50
-        spacing: 10
+        height: manager.config["graphics"]["unit_height"]
+        spacing: manager.config["graphics"]["unit_height"] * .2
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
@@ -58,63 +58,73 @@ Item {
     }
 
     // ScrollView is needed
-    ColumnLayout {
-        id: columnLayout1
+    /*ScrollView {
         anchors.top: row.bottom
         //anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        //spacing: 20
-        visible: true
-
-        Repeater {
-            id: columnLayout1Repeater
-            model: manager.name_list
+        //contentHeight: columnLayout1.height
+        //ScrollBar.vertical.policy: ScrollBar.AlwaysOn
+        contentWidth: columnLayout1.implicitWidth    // The important part
+        contentHeight: columnLayout1.implicitHeight  // Same
+        */
+        ColumnLayout {
+            id: columnLayout1
+            anchors.fill: parent
+            //spacing: 20
             visible: true
+            Layout.fillHeight: true
+            Layout.fillWidth: true
 
-            onItemAdded: {
-                manager.addName("")
-                item.focus = true
-                console.log("onItemAdded")
-            }
-
-            Rectangle {
-                id: columnLayout1RepeaterRect
+            Repeater {
+                id: columnLayout1Repeater
+                model: manager.name_list
                 visible: true
-                Layout.preferredWidth: columnLayout1.width - 10
-                Layout.preferredHeight: columnLayout1.width * .05
-                Layout.margins: 5
-                Layout.topMargin: 15
-                TextField  {
-                    id: columnLayout1RepeaterRectTextField
-                    anchors.centerIn: parent
-                    width: parent.width
-                    text: qsTr(model.modelData)
+
+                onItemAdded: {
+                    manager.addName("")
+                    item.focus = true
+                    console.log("onItemAdded")
+                }
+
+                Rectangle {
+                    id: columnLayout1RepeaterRect
                     visible: true
-                    focus: parent.focus
-                    placeholderText: "Введите название новой детали"
-                    onAccepted: {
-                        manager.changeName(index, text)
-                        console.log(text + " changed")
-                        console.log("\"" + manager.name_list + "\"")
-                    }
-                    onFocusChanged: {
-                        if (focus) {
-                            focusedItemIndex = index
-                            console.log("focusedItemIndex: " + index)
+                    Layout.preferredWidth: columnLayout1.width - 10
+                    Layout.preferredHeight: manager.config.graphics.unit_height * .5
+                    Layout.margins: 5
+                    Layout.topMargin: 15
+                    TextField  {
+                        id: columnLayout1RepeaterRectTextField
+                        anchors.centerIn: parent
+                        width: parent.width
+                        text: qsTr(model.modelData)
+                        visible: true
+                        focus: parent.focus
+                        placeholderText: "Введите название новой детали"
+                        onAccepted: {
+                            manager.changeName(index, text)
+                            console.log(text + " changed")
+                            console.log("\"" + manager.name_list + "\"")
+                        }
+                        onFocusChanged: {
+                            if (focus) {
+                                focusedItemIndex = index
+                                console.log("focusedItemIndex: " + index)
+                            }
                         }
                     }
-                }
-                Component.onCompleted: {
-                    console.log("repeater done")
+                    Component.onCompleted: {
+                        console.log("repeater done")
+                    }
                 }
             }
         }
-    }
+    //}
 
     Rectangle {
         id: bottom
-        height: 50
+        height: manager.config["graphics"]["unit_height"]
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right

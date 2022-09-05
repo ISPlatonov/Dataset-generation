@@ -1,16 +1,14 @@
-import QtMultimedia 5.0
-import QtQuick 2.12
-import QtQuick.Window 2.12
-import QtQuick.Controls 2.0
-import QtQuick.Layouts 1.0
-import QtQuick.Dialogs 1.2
-import QtQml 2.0
+import QtMultimedia
+import QtQuick
+import QtQuick.Window
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQuick.Dialogs
+import QtQml
 
 
 Item {
     id: step1camera
-    width: 640
-    height: 360
 
     signal gotoStep1()
     signal gotoChoosingDir()
@@ -65,7 +63,7 @@ Item {
      }
         // НАДО ЗАЦИКЛИТЬ ПОЯВЛЕНИЕ СТРАНИЦЫ ДО ТЕХ ПОР, ПОКА ФОТКИ КАЖДОЙ ДЕТАЛИ НЕ БУДУТ СДЕЛАНЫ
 
-    Camera {
+    /*Camera {
         id: camera
 
         imageProcessing.whiteBalanceMode: CameraImageProcessing.WhiteBalanceFlash
@@ -84,17 +82,36 @@ Item {
                 console.log(ready)
             }
         }
+    }*/
+
+    CaptureSession {
+        imageCapture : ImageCapture {
+            id: imageCapture
+        }
+        camera: Camera {
+            id: camera
+        }
+
+        videoOutput: videoOutput
+
+        Component.onCompleted: {
+            //camera.cameraFormat = classPhoto.getCameraFormat();
+            camera.start()
+        }
     }
 
     VideoOutput {
-        source: camera
+        id: videoOutput
+        //source: camera
         anchors.fill: parent
         focus : visible
     }
 
-    Image {
+    /*Image {
         id: photoPreview
-    }
+        source: imageCapture.preview
+    }*/
+
     Button {
         id: button1
         text: qsTr("Сделать фотографии")
@@ -109,10 +126,11 @@ Item {
             manager.makeDir(manager.name_list[index]);
             for (var i = 0; i < 10; i++) {
                 camera.start()
-                console.log("ready: " + camera.ready)
-                camera.imageCapture.captureToLocation(manager.images_path + "/" + manager.name_list[index] + "/" + i + ".jpg");
-                var imageFile = camera.imageCapture.capturedImagePath;
-                console.log("test: " + imageFile);
+                console.log("ready: " + imageCapture.readyForCapture )
+                imageCapture.captureToFile(manager.images_path + "/" + manager.name_list[index] + "/" + i + ".jpg");
+                //var imageFile = camera.imageCapture.capturedImagePath;
+                //console.log("test: " + imageFile);
+                //manager.sleepFor(5)
             }
             if (index < manager.name_list.length)
                 index++;
@@ -142,9 +160,9 @@ Item {
 
             camera.start()
             console.log("ready: " + camera.ready + ", qqq: " + "0".repeat(Math.floor(3 - 1 / 10)))
-            camera.imageCapture.captureToLocation(manager.images_path + "/" + manager.name_list[index] + "/" + manager.name_list[index] + "_" + "0".repeat(Math.floor(3 - 1 / 10)) + i + ".jpg");
-            var imageFile = camera.imageCapture.capturedImagePath;
-            console.log("test: " + imageFile);
+            imageCapture.captureToFile(manager.images_path + "/" + manager.name_list[index] + "/" + manager.name_list[index] + "_" + "0".repeat(Math.floor(3 - 1 / 10)) + i + ".jpg");
+            //var imageFile = camera.imageCapture.capturedImagePath;
+            //console.log("test: " + imageFile);
             step1camera.i++;
 
             // check i range

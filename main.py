@@ -1,6 +1,6 @@
-from PySide2.QtQml import QQmlApplicationEngine, QQmlDebuggingEnabler
-from PySide2.QtWidgets import QApplication, QListView
-from PySide2.QtCore import Property, QCoreApplication, QObject, Qt, Signal, QStringListModel, QJsonValue, Slot
+from PySide6.QtQml import QQmlApplicationEngine, QQmlDebuggingEnabler
+from PySide6.QtWidgets import QApplication, QListView
+from PySide6.QtCore import Property, QCoreApplication, QObject, Qt, Signal, QStringListModel, QJsonValue, Slot
 
 import json, sys, signal, time, re, sys
 
@@ -8,8 +8,8 @@ from backend.Manager import Manager
 
 
 if __name__ == "__main__":
-    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
-    QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
+    #QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+    #QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
     app = QApplication(sys.argv)
 
@@ -21,4 +21,4 @@ if __name__ == "__main__":
     engine.load('frontend/main.qml')
     
     signal.signal(signal.SIGINT, signal.SIG_DFL)
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

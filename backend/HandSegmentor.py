@@ -8,18 +8,11 @@ from PIL import Image, ImageStat
 import PIL
 from pycocotools.coco import COCO
 from tqdm import trange
-#from PySide2.QtCore import Property, QCoreApplication, QObject, Qt, Signal, QStringListModel, QJsonValue, Slot
-
-
-# словарь классов распознаваемых объектов, пока что глобальная переменная
-# ОЧЕНЬ НЕ НРАВИТСЯ; нужно смотреть четез os.listdir(path_to_photos)
-#labels = [{"id": 0, "name": "asd"}, {"id": 1, "name": "sddf"}, {"id": 2, "name": "hand"}]
 
 
 class HandSegmentor:
 
     def __init__(self, config):
-        #super(HandSegmentor, self).__init__()
         self.filepath =  config["filepath"] # для тестирования на конкретном фото
         self.filename = config["filename"]  # для тестирования на конкретном фото
         self.cur_detail_path = self.filepath + self.filename
