@@ -7,18 +7,23 @@ import QtQml
 
 
 Item {
-    id: step3backs
-    signal gotoMainView()
+    id: step3photo_num
+    //signal gotoMainView()
     signal gotoGeneration()
-    signal gotoPhotoNum()
-    Button {
+    signal gotoBacks()
+    TextField {
         id: button1
-        text: qsTr("Выбрать папку с фонами")
+        validator: IntValidator {
+            bottom: 1;
+        }
+        text: manager.photo_num
+        focus: true
         width: (parent.width / 2)
         anchors.centerIn: parent
         height: manager.config.graphics.unit_height
-        onClicked: {
-            fileDialog.open()
+        onAccepted: {
+            manager.photo_num = text
+            console.log("photo num = " + text)
         }
     }
     Button {
@@ -28,7 +33,7 @@ Item {
         anchors.margins: 20
         anchors.left: parent.left
         anchors.bottom: parent.bottom
-        onClicked: step3backs.gotoStep3()
+        onClicked: step3photo_num.gotoBacks()
     }
     Button {
         id: button3
@@ -37,7 +42,7 @@ Item {
         anchors.margins: 20
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        onClicked: step3backs.gotoPhotoNum()
+        onClicked: step3photo_num.gotoGeneration()
     }
     FolderDialog {
         id: fileDialog

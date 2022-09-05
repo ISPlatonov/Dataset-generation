@@ -207,13 +207,13 @@ class BacksGeneration(Dict4Json):
         return img, masks_array, d, detail_num + 1
 
 
-    def main_job(self):
+    def main_job(self, photo_num):
         print(os.getcwd() + "\n")
         output = open(f'{self.processed_path}/step 3 output.txt', 'w+')
         name_back = self.backgrounds + '/' + str(1) + ".jpg"
         img = cv2.imread(name_back)
         start = time.time()
-        for id in range(15):
+        for id in range(photo_num):
             k = int(random.uniform(1, 63))  # номер фона
             if k > 50:
                 k = 51  # фотография пустого стола под номером 51

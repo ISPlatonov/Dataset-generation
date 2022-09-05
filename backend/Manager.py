@@ -12,6 +12,7 @@ class Manager(QObject):
     nameListChanged = Signal()
     imagesPathChanged = Signal()
     configChanged = Signal()
+    photoNumChanged = Signal()
 
 
     def __init__(self):
@@ -26,6 +27,7 @@ class Manager(QObject):
         self.hs = HandSegmentor(self._config)
         self.filter = Filtration(self._config)
         self.bg = BacksGeneration(self._config)
+        self._photo_num = self._config['photo_num']
     
 
     #@Slot("QVariant")
@@ -106,7 +108,18 @@ class Manager(QObject):
 
     @Slot()
     def backsGeneration(self):
-        self.bg.main_job()
+        self.bg.main_job(int(self.photo_num))
+    
+
+    @Slot("QVariant")
+    def set_photo_num(self, photo_num):
+        self._photo_num = photo_num
+        self.photoNumChanged.emit()
+    
+
+    #@Slot()
+    def get_photo_num(self):
+        return self._photo_num
     
 
     @Slot("QVariant")
@@ -122,3 +135,4 @@ class Manager(QObject):
     name_list = Property("QVariantList", fget=get_name_list, fset=set_name_list, notify=nameListChanged)
     images_path = Property("QVariant", fget=get_images_path, fset=set_images_path, notify=imagesPathChanged)
     config = Property("QJsonObject", fget=get_config, fset=set_config, notify=configChanged)
+    photo_num = Property("QVariant", fget=get_photo_num, fset=set_photo_num, notify=photoNumChanged)

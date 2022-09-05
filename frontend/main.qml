@@ -65,6 +65,9 @@ ApplicationWindow {
         function onGotoGeneration() {
             mainLoader.source = "step 3/generation.qml"
         }
+        function onGotoPhotoNum() {
+            mainLoader.source = "step 3/photo_num.qml"
+        }
         /*onLoadArray: {
             item.getArray(mainrect.firstStepArray)
         }*/
