@@ -27,8 +27,9 @@ def get_detail_path(processed_path, detail, all_details_names):
     name_regex = re.compile('^' + detail + '\_\d{3}$')
     detail_files = [photo for photo in photos if name_regex.match(photo)]
     print(f'detail files: {detail_files}')
-    i = int(random.uniform(1, len(detail_files)))
-    name = f'{processed_path}/{detail_files[i]}/{detail_files[i]}'
+    #i = int(random.uniform(1, len(detail_files)))
+    detail_folder = random.choice(detail_files)
+    name = f'{processed_path}/{detail_folder}/{detail_folder}'
     print(f'name: {name}')
     #i = int(random.uniform(1, 1000))
     #print('31')

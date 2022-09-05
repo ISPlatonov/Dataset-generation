@@ -2,14 +2,15 @@ import numpy as np
 import cv2
 import time
 import json
-from backend.BackgroundImposing.dict4json import *
+from backend.BackgroundImposing.dict4json import Dict4Json
 from backend.BackgroundImposing.augmentations import *
 from backend.BackgroundImposing.paths import *
 
 
-class BacksGeneration:
+class BacksGeneration(Dict4Json):
 
     def __init__(self, config):
+        super().__init__(config)
         self.processed_path = config['processed_path']
         self.all_details_names = os.listdir(config['filepath'])
         if 'Blank_surface' in self.all_details_names:
@@ -190,16 +191,16 @@ class BacksGeneration:
         if approx is np.nan:
             print("Approx is empty")
             return img, masks_array, d, detail_num
-        yolo_points = get_yolo_points(approx)
+        yolo_points = self.get_yolo_points(approx)
         sdvig_x, sdvig_y = self.get_shifts(img, mask)
         rect = [yolo_points[0] + sdvig_x, yolo_points[1] + sdvig_y, yolo_points[2] + sdvig_x, yolo_points[3] + sdvig_y]
         if detail_num <= 0:
-            d = writing_in_json(detail_num, img, detail_name, id, rect, count, d)
+            d = self.writing_in_json(detail_num, img, detail_name, id, rect, count, d, self.all_details_names)
             img, masks_array[:, :, 0] = self.generate_new_background(detail_num, detail, mask, background, sdvig_x, sdvig_y)
         else:
             flag = self.check_iou(d, rect, detail_num)
             if flag == 1:
-                d = writing_in_json(detail_num, img, detail_name, id, rect, count, d)
+                d = self.writing_in_json(detail_num, img, detail_name, id, rect, count, d, self.all_details_names)
                 img, masks_array[:, :, detail_num] = self.add_detail_on_background(detail, mask, img, sdvig_x, sdvig_y)
             else:
                 return img, masks_array, d, detail_num
@@ -208,11 +209,11 @@ class BacksGeneration:
 
     def main_job(self):
         print(os.getcwd() + "\n")
-        output = open(f'step 3 output.txt', 'w+')
+        output = open(f'{self.processed_path}/step 3 output.txt', 'w+')
         name_back = self.backgrounds + '/' + str(1) + ".jpg"
         img = cv2.imread(name_back)
         start = time.time()
-        for id in range(10000):
+        for id in range(15):
             k = int(random.uniform(1, 63))  # номер фона
             if k > 50:
                 k = 51  # фотография пустого стола под номером 51
@@ -252,7 +253,7 @@ class BacksGeneration:
                 img, masks_array, d, detail_num = self.generate_new_photo(detail_num, id, detail_name, img, detail_path, mask_path,
                                                     background, masks_array, count=a, d=d, vert_flip=vf, horiz_flip=hf, rot=rot)
             file_name = f'img_{id}'
-            write_yolo_txt(d, file_name, a)
+            self.write_yolo_txt(d, file_name, a)
             cv2.imwrite(f'{self.generated_images}/{file_name}.jpg', img)
         output.close()
         print("Time:", time.time() - start)
