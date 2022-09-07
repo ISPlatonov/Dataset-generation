@@ -13,6 +13,8 @@ class Manager(QObject):
     imagesPathChanged = Signal()
     configChanged = Signal()
     photoNumChanged = Signal()
+    backsGenerationPercentChanged = Signal()
+    cameraNumChanged = Signal()
 
 
     def __init__(self):
@@ -28,6 +30,8 @@ class Manager(QObject):
         self.filter = Filtration(self._config)
         self.bg = BacksGeneration(self._config)
         self._photo_num = self._config['photo_num']
+        self._backsGenerationPercent = 0.
+        self._camera_num = self._config["camera_num"]
     
 
     #@Slot("QVariant")
@@ -108,7 +112,9 @@ class Manager(QObject):
 
     @Slot()
     def backsGeneration(self):
-        self.bg.main_job(int(self.photo_num))
+        for percent in self.bg.main_job(int(self.photo_num)):
+            print(f'backsGeneration percent: {percent}')
+            self.back
     
 
     @Slot("QVariant")
@@ -131,8 +137,30 @@ class Manager(QObject):
     #def makeSnapshot(self, name, num=1):
     #    pass
 
+
+    def get_backsGenerationPercent(self):
+        return self.backsGenerationPercent
+    
+
+    @Slot("QVariant")
+    def set_backsGenerationPercent(self, percent):
+        self._backsGenerationPercent = percent
+        self.backsGenerationPercentChanged.emit()
+    
+
+    def get_camera_num(self):
+        return self._camera_num
+    
+
+    @Slot("QVariant")
+    def set_camera_num(self, camera_num):
+        self._camera_num = camera_num
+        self.cameraNumChanged.emit()
+
     
     name_list = Property("QVariantList", fget=get_name_list, fset=set_name_list, notify=nameListChanged)
     images_path = Property("QVariant", fget=get_images_path, fset=set_images_path, notify=imagesPathChanged)
     config = Property("QJsonObject", fget=get_config, fset=set_config, notify=configChanged)
     photo_num = Property("QVariant", fget=get_photo_num, fset=set_photo_num, notify=photoNumChanged)
+    camera_num = Property("QVariant", fget=get_camera_num, fset=set_camera_num, notify=cameraNumChanged)
+    backsGenerationPercent = Property("QVariant", fget=get_backsGenerationPercent, fset=set_backsGenerationPercent, notify=backsGenerationPercentChanged)

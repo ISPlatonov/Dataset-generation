@@ -56,4 +56,8 @@ Item {
         id: backsloader
         anchors.fill: parent
     }
+    Keys.onUpPressed: manager.photo_num++
+    Keys.onDownPressed: manager.photo_num--
+    Keys.onEnterPressed: step3photo_num.gotoGeneration()
+    Keys.onEscapePressed: step3photo_num.gotoBacks()
 }

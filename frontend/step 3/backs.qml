@@ -48,4 +48,6 @@ Item {
         id: backsloader
         anchors.fill: parent
     }
+    Keys.onEnterPressed: step3backs.gotoPhotoNum()
+    Keys.onEscapePressed: step3backs.gotoStep3()
 }

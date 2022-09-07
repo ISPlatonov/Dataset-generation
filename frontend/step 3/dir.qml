@@ -10,6 +10,7 @@ Item {
     id: step3dir
     signal gotoMainView()
     signal gotoBacks()
+    focus: true
     Button {
         id: button1
         text: qsTr("Выбрать папку с масками деталей")
@@ -46,5 +47,11 @@ Item {
     Loader {
         id: dirloader
         anchors.fill: parent
+    }
+    Keys.onEscapePressed: {
+        step3dir.gotoMainView()
+    }
+    Keys.onEnterPressed: {
+        step3dir.gotoBacks()
     }
 }

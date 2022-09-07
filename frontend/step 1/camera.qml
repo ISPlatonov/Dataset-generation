@@ -8,6 +8,9 @@ import QtQml
 
 
 Item {
+    MediaDevices {
+        id: devices
+    }
     id: step1camera
 
     signal gotoStep1()
@@ -60,8 +63,8 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.margins: 50
         text: qsTr("\nСделайте фотографии детали " + manager.name_list[index])
-     }
-        // НАДО ЗАЦИКЛИТЬ ПОЯВЛЕНИЕ СТРАНИЦЫ ДО ТЕХ ПОР, ПОКА ФОТКИ КАЖДОЙ ДЕТАЛИ НЕ БУДУТ СДЕЛАНЫ
+    }
+    // НАДО ЗАЦИКЛИТЬ ПОЯВЛЕНИЕ СТРАНИЦЫ ДО ТЕХ ПОР, ПОКА ФОТКИ КАЖДОЙ ДЕТАЛИ НЕ БУДУТ СДЕЛАНЫ
 
     /*Camera {
         id: camera
@@ -90,6 +93,7 @@ Item {
         }
         camera: Camera {
             id: camera
+            cameraDevice: devices.videoInputs[manager.camera_num]
         }
 
         videoOutput: videoOutput

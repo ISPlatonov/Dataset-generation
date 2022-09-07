@@ -10,6 +10,7 @@ Item {
     id: step3generation
     signal gotoMainView()
     signal gotoBacks()
+    signal gotoPhotoNum()
     property var filtr_progress: 1
     property var gen_progress: 0.2
     Column {
@@ -35,7 +36,7 @@ Item {
         anchors.margins: 20
         anchors.left: parent.left
         anchors.bottom: parent.bottom
-        onClicked: step3generation.gotoBacks()
+        onClicked: step3generation.gotoPhotoNum()
     }
     Button {
         id: button3
@@ -54,4 +55,10 @@ Item {
         id: dirloader
         anchors.fill: parent
     }
+    Keys.onEnterPressed: {
+        manager.filtration()
+        manager.backsGeneration()
+        step3generation.gotoMainView()
+    }
+    Keys.onEscapePressed: step3generation.gotoPhotoNum()
 }

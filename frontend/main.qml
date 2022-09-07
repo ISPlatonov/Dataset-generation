@@ -4,11 +4,15 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQml
 import QtQuick.Layouts
+import QtMultimedia
 
 import "."
 
 
 ApplicationWindow {
+    MediaDevices {
+        id: devices
+    }
     id: mainrect
     //color: Constants.backgroundColor
     width: manager.config["graphics"]["window_size"]["width"]
@@ -25,7 +29,7 @@ ApplicationWindow {
         source: "mainview.qml"
         anchors.fill: parent
         property int loader_prop_index
-        onLoaded: console.log("page is loaded: ", source)
+        onLoaded: console.log("page is loaded: ", source, ", cameras: ", devices.videoInputs[manager.camera_num])
     }
 
     Connections {

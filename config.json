@@ -10,6 +10,7 @@
     "empty_table_photo_name_": "empty_table.jpg",
     "need_hand": false,
     "photo_num": 15,
+    "camera_num": 0,
     "graphics": {
         "window_size": {
             "height": 640,
