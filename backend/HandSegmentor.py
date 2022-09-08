@@ -334,7 +334,7 @@ class HandSegmentor:
             my_dict['images'].append(images_list[i][0])
             my_dict['annotations'].append(annotations_list[i][0])
             my_dict['annotations'].append(annotations_list[i][1])
-        with open(directory_path + '/pack_of_dets_json.json', "w") as write_file:
+        with open('pack_of_dets_json.json', "w") as write_file:
             json.dump(my_dict, write_file)  # переводим словарь в формат json
 
 
