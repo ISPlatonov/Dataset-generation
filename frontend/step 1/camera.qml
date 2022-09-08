@@ -45,7 +45,8 @@ Item {
             id: imageCapture
             onImageSaved: {
                 console.log("image saved")
-                if (i == 3) {
+                manager.sleepFor(manager.config["snapshots"]["snapshot_delay"])
+                if (i == manager.config["snapshots"]["snapshots_number"]) {
                     step1camera.i = 0;
                     step1camera.autoSnapping = false;
                     if (index < manager.name_list.length)
@@ -61,7 +62,6 @@ Item {
                 if (step1camera.autoSnapping == true) {
                     makeSnapshoot()
                 }
-
             }
         }
         camera: Camera {
