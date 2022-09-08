@@ -3,14 +3,12 @@ import QtQuick.Window
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
+import Qt.labs.platform
 import QtQml
 
 import "."
-/*
-Доделать:
-1) Перенос клика при создании нового поля (курсор в новом поле для ввода) + перемещение по клавишам "вверх-вниз"
-2) Загрузка списка деталей вместо ввода по полям - как аналог ввода
-*/
+
+
 Item {
     anchors.fill: parent
     visible: true
@@ -57,7 +55,6 @@ Item {
         }
     }
 
-    // ScrollView is needed
     ScrollView {
         anchors.top: row.bottom
         anchors.bottom: bottom.top

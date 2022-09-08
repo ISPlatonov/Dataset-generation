@@ -21,21 +21,13 @@ Item {
 
     function makeSnapshoot() {
         manager.makeDir(manager.name_list[index])
-        //console.log("index: " + index + ", len: " + manager.name_list.length)
         manager.makeDir(manager.name_list[index]);
-
         camera.start()
-        //console.log("ready: " + camera.ready + ", qqq: " + "0".repeat(Math.floor(3 - 1 / 10)))
         imageCapture.captureToFile(manager.images_path + "/" + manager.name_list[index] + 
                                    "/" + manager.name_list[index] + "_" + 
                                    "0".repeat(Math.floor(3 - 1 / 10)) + i + ".jpg");
         console.log("i: ", i)
         step1camera.i++;
-
-        // check i range
-        
-            //console.log("index: " + index + ", len: " + manager.name_list.length)
-            //console.log(camera.cameraStatus)
     }
 
 
@@ -80,7 +72,6 @@ Item {
         videoOutput: videoOutput
 
         Component.onCompleted: {
-            //camera.cameraFormat = classPhoto.getCameraFormat();
             camera.start()
         }
     }
@@ -88,7 +79,6 @@ Item {
 
     VideoOutput {
         id: videoOutput
-        //source: camera
         anchors.fill: parent
         focus : visible
     }
