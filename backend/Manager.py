@@ -34,11 +34,6 @@ class Manager(QObject):
         self._camera_num = self._config["camera_num"]
     
 
-    #@Slot("QVariant")
-    #def make_snapshots_step(self, name_list):
-    #    msg = name_list.toVariant()
-    
-
     def set_name_list(self, name_list):
         self._name_list = name_list
         self.nameListChanged.emit()
@@ -132,11 +127,6 @@ class Manager(QObject):
     @Slot("QVariant")
     def sleepFor(self, secs):
         sleep(secs)
-    
-
-    #@Slot("QVariant")
-    #def makeSnapshot(self, name, num=1):
-    #    pass
 
 
     def get_backsGenerationPercent(self):

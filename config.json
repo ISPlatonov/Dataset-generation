@@ -19,5 +19,9 @@
             "width": 480
         },
         "unit_height": 50
+    },
+    "snapshots": {
+        "snapshot_delay": 1,
+        "snapshots_number": 3
     }
 }
