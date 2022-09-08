@@ -23,6 +23,8 @@ class BacksGeneration(Dict4Json):
             self.all_details_names.remove('backgrounds')
         self.backgrounds = config['backgrounds']
         self.generated_images = config['generated_images']
+        self.height = config['height']
+        self.width = config['width']
 
 
     def get_score(self, boxA, boxB):
@@ -74,7 +76,7 @@ class BacksGeneration(Dict4Json):
         :return: array, int
         """
         if (detail_num < 1):
-            background1 = resize_specific_width_and_height(background1, 1920, 1080)
+            background1 = resize_specific_width_and_height(background1, self.width, self.height)
         background1, gt = self.adding_img_on_background(img, mask_gray, background1, sdvig_x, sdvig_y, rect)
         return background1, gt
 
@@ -89,8 +91,8 @@ class BacksGeneration(Dict4Json):
         :param sdvig_x: int
         :param sdvig_y: int
         :return: array, array
-        """
-        prev_mask = np.zeros((1080, 1920))
+        """ 
+        prev_mask = np.zeros((self.height, self.width))
         for i in range(int(rect[1]), int(rect[3])):
             for j in range(int(rect[0]), int(rect[2])):
                 if mask_gray[i - sdvig_y][j - sdvig_x] > 250:
@@ -107,7 +109,7 @@ class BacksGeneration(Dict4Json):
         :param sdvig_y: int
         :return: array
         """
-        cur_mask = np.zeros((1080, 1920))
+        cur_mask = np.zeros((self.height, self.width))
         for i in range(mask_gray.shape[0]):
             for j in range(mask_gray.shape[1]):
                 if mask_gray[i][j] > 250:
@@ -164,7 +166,7 @@ class BacksGeneration(Dict4Json):
 
 
     def generate_new_photo(self, detail_num, id, detail_name, img, path_detail, path_mask, background, masks_array,
-                            count, d, vert_flip=0, horiz_flip=0, rot=0):
+                            count, d, square, vert_flip=0, horiz_flip=0, rot=0):
         """
         Генерация нового изображения
         :param detail_num: int - номер (порядок) детали среди всех, нанесенных на изображение с этим id
@@ -189,10 +191,15 @@ class BacksGeneration(Dict4Json):
         approx = self.get_approx(mask, detail_name)
         if approx is np.nan:
             print("Approx is empty")
-            return img, masks_array, d, detail_num
+            return img, masks_array, d, detail_num, square
         yolo_points = self.get_yolo_points(approx)
+        # while img.shape[0] > self.height or img.shape[1] > self.width:
+        #     print("Scaling in percent...")
+        #     print(f'img.shape: {img.shape}')
+        #     img = scale_image_in_percent(img, 0.9)
         sdvig_x, sdvig_y = self.get_shifts(img, mask)
         rect = [yolo_points[0] + sdvig_x, yolo_points[1] + sdvig_y, yolo_points[2] + sdvig_x, yolo_points[3] + sdvig_y]
+        square += (yolo_points[2] - yolo_points[0]) * (yolo_points[3] - yolo_points[1])
         if detail_num <= 0:
             d = self.writing_in_json(detail_num, img, detail_name, id, rect, count, d, self.all_details_names)
             img, masks_array[:, :, 0] = self.generate_new_background(detail_num, detail, mask, background, sdvig_x, sdvig_y, rect)
@@ -202,8 +209,8 @@ class BacksGeneration(Dict4Json):
                 d = self.writing_in_json(detail_num, img, detail_name, id, rect, count, d, self.all_details_names)
                 img, masks_array[:, :, detail_num] = self.add_detail_on_background(detail, mask, img, sdvig_x, sdvig_y, rect)
             else:
-                return img, masks_array, d, detail_num
-        return img, masks_array, d, detail_num + 1
+                return img, masks_array, d, detail_num, square
+        return img, masks_array, d, detail_num + 1, square
 
 
     def main_job(self, photo_num):
@@ -212,45 +219,37 @@ class BacksGeneration(Dict4Json):
         name_back = self.backgrounds + '/' + str(1) + ".jpg"
         img = cv2.imread(name_back)
         start = time.time()
+        max_square = self.height * self.width
         for id in range(photo_num):
             k = int(random.uniform(1, 63))  # номер фона
+            square = 0  # square of overlayed details
             if k > 50:
                 k = 51  # фотография пустого стола под номером 51
             name_back = self.backgrounds + '/'+ str(k) + ".jpg"
-            background = resize_specific_width_and_height(cv2.imread(name_back), 1920, 1080)
-            masks_array = np.zeros((1080 * 1920 * 20)).reshape((1080, 1920, 20))
+            background = resize_specific_width_and_height(cv2.imread(name_back), self.width, self.height)
+            masks_array = np.zeros((self.height * self.width * 20)).reshape((self.height, self.width, 20))
             start_time = time.time()
             a = int(random.uniform(1, len(self.all_details_names)))  # количество деталей на картинке
             output.write(f'amount of details is {a} for img_{id}\n')
             print(f'amount of details is {a} for img_{id}\n')
             detail_num = 0
-            while detail_num < a:
+            while detail_num < a and square < max_square:
                 print(f'detail_num: {detail_num}')
                 if detail_num <= 0:
                     d = {}
                 j = int(random.uniform(0, len(self.all_details_names)))  # номер детали из комплекта
                 detail_name = self.all_details_names[j]
-                # print(detail_name)
                 if detail_name == "hand":
-                    print('1')
-                    detail_path, mask_path = get_hand_path(detail_name, self.all_details_names)
-                    print('2')
-                    # cv2.imshow(str("1"), cv2.imread(detail_path))
-                    # cv2.waitKey(0)
-                    # cv2.imshow(str("2"), cv2.imread(mask_path))
-                    # cv2.waitKey(0)
+                    detail_path, mask_path = get_hand_path(self.processed_path)
                 else:
-                    print('3')
-                    detail_path, mask_path = get_detail_path(self.processed_path, detail_name, self.all_details_names)
-                    print('4')
+                    detail_path, mask_path = get_detail_path(self.processed_path)
                 output.write(f'{detail_path}\n')
                 vf = int(random.uniform(0, 2))
                 hf = int(random.uniform(0, 2))
                 vf = int(random.uniform(0, 2))
                 rot = int(random.uniform(0, 360))
-                print('biba')
-                img, masks_array, d, detail_num = self.generate_new_photo(detail_num, id, detail_name, img, detail_path, mask_path,
-                                                    background, masks_array, count=a, d=d, vert_flip=vf, horiz_flip=hf, rot=rot)
+                img, masks_array, d, detail_num, square = self.generate_new_photo(detail_num, id, detail_name, img, detail_path, mask_path,
+                                                    background, masks_array, count=a, d=d, square=square, vert_flip=vf, horiz_flip=hf, rot=rot)
             file_name = f'img_{id}'
             self.write_yolo_txt(d, file_name, a)
             cv2.imwrite(f'{self.generated_images}/{file_name}.jpg', img)
