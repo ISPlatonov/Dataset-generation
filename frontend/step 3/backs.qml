@@ -8,9 +8,10 @@ import QtQml
 
 Item {
     id: step3backs
-    signal gotoMainView()
+    //signal gotoMainView()
     signal gotoGeneration()
     signal gotoPhotoNum()
+    signal gotoStep3()
     Button {
         id: button1
         text: qsTr("Выбрать папку с фонами")

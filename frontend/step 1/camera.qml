@@ -38,7 +38,7 @@ Item {
     function makeSnapshoot() {
         console.log("index: " + index + ", len: " + manager.name_list.length)
         manager.makeDir(manager.name_list[index]);
-        for (var i = 0; i < 10; i++) {
+        for (var i = 0; i < 3; i++) {
             camera.start()
             console.log("ready: " + camera.ready)
             camera.imageCapture.captureToLocation(manager.images_path + "/" + manager.name_list[index] + "/" + i + ".jpg");
@@ -128,7 +128,7 @@ Item {
             //snap(step1camera.i)
             console.log("index: " + index + ", len: " + manager.name_list.length)
             manager.makeDir(manager.name_list[index]);
-            for (var i = 0; i < 10; i++) {
+            for (var i = 0; i < 3; i++) {
                 camera.start()
                 console.log("ready: " + imageCapture.readyForCapture )
                 imageCapture.captureToFile(manager.images_path + "/" + manager.name_list[index] + "/" + i + ".jpg");
@@ -170,7 +170,7 @@ Item {
             step1camera.i++;
 
             // check i range
-            if (i == 10) {
+            if (i == 3) {
                 step1camera.i = 0;
                 if (index < manager.name_list.length)
                     index++;

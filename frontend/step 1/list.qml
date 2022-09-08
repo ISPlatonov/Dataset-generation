@@ -26,7 +26,7 @@ Item {
     Row {
         id: row
         height: manager.config["graphics"]["unit_height"]
-        spacing: manager.config["graphics"]["unit_height"] * .2
+        //spacing: manager.config["graphics"]["unit_height"] * .2
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
@@ -63,7 +63,7 @@ Item {
         anchors.bottom: bottom.top
         anchors.left: parent.left
         anchors.right: parent.right
-        ScrollBar.horizontal.interactive: false
+        //ScrollBar.horizontal.interactive: false
         contentWidth: -1
         //contentHeight: columnLayout1.height
         //ScrollBar.vertical.policy: ScrollBar.AlwaysOn
@@ -80,14 +80,14 @@ Item {
             //anchors.right: parent.right
             //anchors.bottom: bottom.top
             //spacing: 20
-            visible: true
+            //visible: true
             Layout.fillHeight: true
             Layout.fillWidth: true
 
             Repeater {
                 id: columnLayout1Repeater
                 model: manager.name_list
-                visible: true
+                //visible: true
 
                 onItemAdded: {
                     manager.addName("")
@@ -97,11 +97,11 @@ Item {
 
                 Rectangle {
                     id: columnLayout1RepeaterRect
-                    visible: true
+                    //visible: true
                     Layout.preferredWidth: columnLayout1.width - 50
-                    Layout.preferredHeight: manager.config.graphics.unit_height * .5
+                    //Layout.preferredHeight: manager.config.graphics.unit_height * .5
                     Layout.margins: 25
-                    Layout.topMargin: 15
+                    //Layout.topMargin: 15
                     TextField  {
                         id: columnLayout1RepeaterRectTextField
                         anchors.centerIn: parent
@@ -130,7 +130,7 @@ Item {
         }
     }
 
-    Rectangle {
+    Row {
         id: bottom
         height: manager.config["graphics"]["unit_height"]
         anchors.bottom: parent.bottom

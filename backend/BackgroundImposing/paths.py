@@ -22,6 +22,7 @@ def get_detail_path(processed_path, detail, all_details_names):
     :param detail: str
     :return: str
     """
+    print(f'processed_path: {processed_path}, detail: {detail}')
     import re
     photos = os.listdir(processed_path)
     name_regex = re.compile('^' + detail + '\_\d{3}$')

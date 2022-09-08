@@ -29,7 +29,7 @@ ApplicationWindow {
         source: "mainview.qml"
         anchors.fill: parent
         property int loader_prop_index
-        onLoaded: console.log("page is loaded: ", source, ", cameras: ", devices.videoInputs[manager.camera_num])
+        onLoaded: console.log("page is loaded: ", source)
     }
 
     Connections {

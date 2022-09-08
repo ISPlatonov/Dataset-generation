@@ -114,7 +114,8 @@ class Manager(QObject):
     def backsGeneration(self):
         for percent in self.bg.main_job(int(self.photo_num)):
             print(f'backsGeneration percent: {percent}')
-            self.back
+            self.set_backsGenerationPercent(percent)
+        #self.bg.main_job(int(self.photo_num))
     
 
     @Slot("QVariant")
@@ -139,7 +140,7 @@ class Manager(QObject):
 
 
     def get_backsGenerationPercent(self):
-        return self.backsGenerationPercent
+        return self._backsGenerationPercent
     
 
     @Slot("QVariant")

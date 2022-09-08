@@ -14,13 +14,13 @@ Item {
     signal gotoStep2()
     signal gotoStep3()
     //signal handSegmentor()
-    Image {
+    /*Image {
         id: photoPreview
         width: parent.width
         height: parent.height
         anchors.margins: 100
-        source: "batman_001.jpg"
-    }
+        source: "images/biba/biba_000.jpg" // manager.images_path + "/" + manager.name_list[0] + "/" + manager.name_list[0] + "_000.jpg"
+    }*/
     Button {
         id: button1
         text: qsTr("Подтвердить")
@@ -30,6 +30,7 @@ Item {
         anchors.bottom: parent.bottom
         onClicked: {
             manager.handSegmentor()
+            //console.log("path to image: " + manager.images_path + "/" + manager.name_list[0] + "/" + manager.name_list[0] + "_000.jpg")
             gotoStep3()
         }
     }

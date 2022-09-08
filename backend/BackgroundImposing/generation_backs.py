@@ -61,7 +61,7 @@ class BacksGeneration(Dict4Json):
         return approx
 
 
-    def generate_new_background(self, detail_num, img, mask_gray, background1, sdvig_x, sdvig_y):
+    def generate_new_background(self, detail_num, img, mask_gray, background1, sdvig_x, sdvig_y, rect):
         """
         Функция-посредник: при необходимости меняет размерность фона
         и добавляет новые элементы на фон.
@@ -75,11 +75,12 @@ class BacksGeneration(Dict4Json):
         """
         if (detail_num < 1):
             background1 = resize_specific_width_and_height(background1, 1920, 1080)
-        background1, gt = self.adding_img_on_background(img, mask_gray, background1, sdvig_x, sdvig_y)
+        background1, gt = self.adding_img_on_background(img, mask_gray, background1, sdvig_x, sdvig_y, rect)
         return background1, gt
 
 
-    def adding_img_on_background(self, img, mask_gray, background, sdvig_x, sdvig_y):
+
+    def adding_img_on_background(self, img, mask_gray, background, sdvig_x, sdvig_y, rect):
         """
         Функция отрисовки новой детали на фоне.
         :param img: array
@@ -90,13 +91,11 @@ class BacksGeneration(Dict4Json):
         :return: array, array
         """
         prev_mask = np.zeros((1080, 1920))
-        for i in range(mask_gray.shape[0]):
-            for j in range(mask_gray.shape[1]):
-                if mask_gray[i][j] > 250:
-                    background[i + sdvig_y][j + sdvig_x][0] = img[i][j][0]
-                    background[i + sdvig_y][j + sdvig_x][1] = img[i][j][1]
-                    background[i + sdvig_y][j + sdvig_x][2] = img[i][j][2]
-                    prev_mask[i + sdvig_y][j + sdvig_x] = mask_gray[i][j]
+        for i in range(int(rect[1]), int(rect[3])):
+            for j in range(int(rect[0]), int(rect[2])):
+                if mask_gray[i - sdvig_y][j - sdvig_x] > 250:
+                    background[i][j] = img[i - sdvig_y][j - sdvig_x]
+                    prev_mask[i][j] = mask_gray[i - sdvig_y][j - sdvig_x]
         return background, prev_mask
 
 
@@ -149,7 +148,7 @@ class BacksGeneration(Dict4Json):
         return flag
 
 
-    def add_detail_on_background(self, img, mask_gray, background, sdvig_x, sdvig_y):
+    def add_detail_on_background(self, img, mask_gray, background, sdvig_x, sdvig_y, rect):
         """
         Добавление детали на фон.
         :param img: array
@@ -160,7 +159,7 @@ class BacksGeneration(Dict4Json):
         :return: array, array
         """
         cur_mask = self.get_mask(mask_gray, sdvig_x, sdvig_y)
-        background, _ = self.adding_img_on_background(img, mask_gray, background, sdvig_x, sdvig_y)
+        background, _ = self.adding_img_on_background(img, mask_gray, background, sdvig_x, sdvig_y, rect)
         return background, cur_mask
 
 
@@ -196,12 +195,12 @@ class BacksGeneration(Dict4Json):
         rect = [yolo_points[0] + sdvig_x, yolo_points[1] + sdvig_y, yolo_points[2] + sdvig_x, yolo_points[3] + sdvig_y]
         if detail_num <= 0:
             d = self.writing_in_json(detail_num, img, detail_name, id, rect, count, d, self.all_details_names)
-            img, masks_array[:, :, 0] = self.generate_new_background(detail_num, detail, mask, background, sdvig_x, sdvig_y)
+            img, masks_array[:, :, 0] = self.generate_new_background(detail_num, detail, mask, background, sdvig_x, sdvig_y, rect)
         else:
             flag = self.check_iou(d, rect, detail_num)
             if flag == 1:
                 d = self.writing_in_json(detail_num, img, detail_name, id, rect, count, d, self.all_details_names)
-                img, masks_array[:, :, detail_num] = self.add_detail_on_background(detail, mask, img, sdvig_x, sdvig_y)
+                img, masks_array[:, :, detail_num] = self.add_detail_on_background(detail, mask, img, sdvig_x, sdvig_y, rect)
             else:
                 return img, masks_array, d, detail_num
         return img, masks_array, d, detail_num + 1
@@ -209,7 +208,7 @@ class BacksGeneration(Dict4Json):
 
     def main_job(self, photo_num):
         print(os.getcwd() + "\n")
-        output = open(f'{self.processed_path}/step 3 output.txt', 'w+')
+        output = open(f'step 3 output.txt', 'w+')
         name_back = self.backgrounds + '/' + str(1) + ".jpg"
         img = cv2.imread(name_back)
         start = time.time()

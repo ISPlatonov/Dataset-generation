@@ -194,12 +194,13 @@ class HandSegmentor:
             # u can change it imself
             x_max, y_max, x_min, y_min = max(x_landmark_coord), max(y_landmark_coord), min(x_landmark_coord), min(
                 y_landmark_coord)  # вписываем кисть в прямоугольник
+            w, h = x_max - x_min, y_max - y_min
+            eps = max(w, h) * 1
             hands.close()  # чистим память
             x_max, y_max, x_min, y_min = x_max + eps, y_max + eps, x_min - eps, y_min - eps  # отступаем от краев
 
         else:
             x_max, y_max, x_min, y_min = 200, 200, 100, 100
-            #x_max, y_max, x_min, y_min = x_max + eps, y_max + eps, x_min - eps, y_min - eps  # отступаем от краев
 
         roi = img_original[y_min:y_max, x_min:x_max]  # выделяем область интереса ROI
         if roi.shape[0] == 0:

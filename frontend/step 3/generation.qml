@@ -26,7 +26,7 @@ Item {
             text: qsTr("Генерация данных...")
         }
         ProgressBar {
-            value: gen_progress
+            value: manager.backsGenerationPercent
         }
     }
     Button {
