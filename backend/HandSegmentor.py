@@ -38,6 +38,8 @@ class HandSegmentor:
             names_list.remove('processed')
         if '.gitignore' in names_list:
             names_list.remove('.gitignore')
+        if 'generated_images' in names_list:
+            names_list.remove('generated_images')
         
         self.labels = list()
         for i in range(len(names_list)):

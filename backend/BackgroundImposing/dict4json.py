@@ -15,6 +15,8 @@ class Dict4Json:
             self.all_details_names.remove('.gitignore')
         if 'backgrounds' in self.all_details_names:
             self.all_details_names.remove('backgrounds')
+        if 'hand' not in self.all_details_names:
+            self.all_details_names.append('hand')
         self.backgrounds = config['backgrounds']
         self.generated_images = config['generated_images']
         self.names_to_category_id_dict = dict()
