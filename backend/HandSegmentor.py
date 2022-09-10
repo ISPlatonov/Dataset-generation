@@ -8,6 +8,7 @@ from PIL import Image, ImageStat
 import PIL
 from pycocotools.coco import COCO
 from tqdm import trange
+from threading import Thread, active_count
 
 
 class HandSegmentor:
@@ -49,6 +50,7 @@ class HandSegmentor:
 
 
     def main_job(self):
+        print(f'init active_count: {active_count()}')
         try:
             os.makedirs(self.processed_dir)
         except:
@@ -56,13 +58,17 @@ class HandSegmentor:
         # для обрабокти всей папки с подпапками с фото
         for i in trange(len(self.labels) - 1):
             my_path = self.root_dir_with_dirs + self.labels[i]["name"] + "/"
+            threads = list()
             for filename in os.listdir(my_path):
+                print(f'active_count: {active_count()}')
+                while active_count() >= os.cpu_count():
+                    pass
                 if filename[filename.rfind(".") + 1:] in ['jpg', 'png']:
                     self.cur_detail_path = my_path + filename
-                    self.mediapipe_hand_track(self.cur_detail_path, filename, self.output_dir,
+                    threads.append(Thread(target=self.mediapipe_hand_track, args=(self.cur_detail_path, filename, self.output_dir,
                                         self.empty_table_filepath_to_folder_,
-                                        self.empty_table_photo_name_,
-                                        eps=100, show=False, save=True, need_hand=self.need_hand)
+                                        self.empty_table_photo_name_,),
+                                        kwargs={'eps': 100, 'show': False, 'save': True, 'need_hand': self.need_hand}).start())
         # папка со сгенерированными json файлами
         self.unite_many_jsons(self.processed_dir, self.labels)
         #unite_many_jsons_condition(test_dir, all_imgs_in_one_dir_together, labels)
@@ -91,10 +97,10 @@ class HandSegmentor:
         for item in self.labels:
             names_to_category_id_dict[item["name"]] = item["id"]
         # проверка корректности переданного имени изображения, что оно есть в исходном словаре
-        print(f'file_name: {file_name}')
-        print(f'file_name[:-8]: {file_name[:-8]}, names_to_category_id_dict: {names_to_category_id_dict}')
-        if file_name[:-8] in names_to_category_id_dict:
-            category_id = names_to_category_id_dict[file_name[:-8]]
+        print('orig. name: ' + file_name + ', for json file_name: ' + file_name[:-file_name[::-1].find('_')-1])
+        #print(f'file_name[:-file_name[::-1].find('_')-1]: {file_name[:-file_name[::-1].find('_')-1]}, names_to_category_id_dict: {names_to_category_id_dict}')
+        if file_name[:-file_name[::-1].find('_')-1] in names_to_category_id_dict:
+            category_id = names_to_category_id_dict[file_name[:-file_name[::-1].find('_')-1]]
         else:
             raise Exception("Такого имени нет в словаре!")
         hand_category_id = names_to_category_id_dict["hand"]  # считываем id руки
@@ -205,9 +211,10 @@ class HandSegmentor:
             x_max, y_max, x_min, y_min = 200, 200, 100, 100
 
         roi = img_original[y_min:y_max, x_min:x_max]  # выделяем область интереса ROI
-        if roi.shape[0] == 0:
+        if roi.shape[0] == 0 or roi.shape[1] == 0:
             print("Область интереса ROI пуста")
             return 0
+        print(f'roi.shape: {roi.shape}')
         YCrCb = cv2.cvtColor(roi, cv2.COLOR_BGR2YCR_CB)  # преобразуем в пространство YCrCb
         (y, cr, cb) = cv2.split(YCrCb)  # выделяем значения Y, Cr, Cb
         cr1 = cv2.GaussianBlur(cr, (5, 5), 0)  # фильтр Гаусса для небольшого размытия

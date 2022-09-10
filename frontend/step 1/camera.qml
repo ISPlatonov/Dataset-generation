@@ -25,7 +25,7 @@ Item {
         camera.start()
         imageCapture.captureToFile(manager.images_path + "/" + manager.name_list[index] + 
                                    "/" + manager.name_list[index] + "_" + 
-                                   "0".repeat(Math.floor(3 - 1 / 10)) + i + ".jpg");
+                                   /*"0".repeat(Math.floor(3 - 1 / 10)) +*/ i + ".jpg");
         console.log("i: ", i)
         step1camera.i++;
     }
