@@ -1,6 +1,7 @@
 from PySide6.QtCore import Property, QCoreApplication, QObject, Qt, Signal, QStringListModel, QJsonValue, Slot
 import json, os
 from time import sleep
+from threading import Thread
 
 from backend.HandSegmentor import HandSegmentor
 from backend.BackgroundImposing.filtration import Filtration
@@ -15,6 +16,7 @@ class Manager(QObject):
     photoNumChanged = Signal()
     backsGenerationPercentChanged = Signal()
     cameraNumChanged = Signal()
+    hsEnded = Signal()
 
 
     def __init__(self):
@@ -97,7 +99,7 @@ class Manager(QObject):
 
     @Slot()
     def handSegmentor(self):
-        self.hs.main_job()
+        Thread(target=self.hs.main_job, args=(self.hsEnded,)).start()
     
 
     @Slot()

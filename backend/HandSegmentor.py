@@ -9,6 +9,7 @@ import PIL
 from pycocotools.coco import COCO
 from tqdm import trange
 from threading import Thread, active_count
+from PySide6.QtCore import Signal
 
 
 class HandSegmentor:
@@ -49,7 +50,7 @@ class HandSegmentor:
         print(f'self.labels: {self.labels}')
 
 
-    def main_job(self):
+    def main_job(self, signal):
         print(f'init active_count: {active_count()}')
         try:
             os.makedirs(self.processed_dir)
@@ -73,6 +74,7 @@ class HandSegmentor:
         self.unite_many_jsons(self.processed_dir, self.labels)
         #unite_many_jsons_condition(test_dir, all_imgs_in_one_dir_together, labels)
         #delete_files_without_segmentation(all_imgs_in_one_dir_together)
+        signal.emit()
 
         
     # ID надо сделать членом класса -> уникальность

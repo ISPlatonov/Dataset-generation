@@ -14,6 +14,7 @@ Item {
     signal gotoMainView()
     signal gotoStep2()
     signal gotoStep3()
+    signal hsEnded()
     //signal handSegmentor()
     /*Image {
         id: photoPreview
@@ -32,7 +33,10 @@ Item {
         onClicked: {
             manager.handSegmentor()
             //console.log("path to image: " + manager.images_path + "/" + manager.name_list[0] + "/" + manager.name_list[0] + "_000.jpg")
-            gotoStep3()
+            //gotoStep3()
+            button1.enabled = false
+            button2.enabled = false
+            slider.enabled = false
         }
     }
     Button {
@@ -53,5 +57,12 @@ Item {
     Loader {
         id: thresholdloader
         anchors.fill: parent
+    }
+    Connections {
+        target: manager
+ 
+        onHsEnded: {
+            gotoStep3()
+        }
     }
 }
