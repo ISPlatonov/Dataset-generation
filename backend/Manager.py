@@ -108,7 +108,7 @@ class Manager(QObject):
     def handSegmentor(self):
         self.set_hsStatus(0.)
         #Thread(target=self.hs.main_job, args=(self.hsEnded,)).start()
-        Thread(target=self.hs.main_job, args=(self.hsEnded, self.increment_hsStatus)).start()
+        Thread(target=self.hs.main_job, args=(self.hsEnded, self.increment_hsStatus), daemon=True).start()
     
 
     @Slot()
@@ -126,7 +126,7 @@ class Manager(QObject):
     @Slot()
     def backsGeneration(self):
         self.set_backsGenerationPercent(0.)
-        Thread(target=self.backsGenerationStep).start()
+        Thread(target=self.backsGenerationStep, daemon=True).start()
     
 
     @Slot("QVariant")
