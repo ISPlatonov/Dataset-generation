@@ -54,8 +54,8 @@ class BacksGeneration(Dict4Json):
         mask_gray = black_and_white_mask
         mask_gray = cv2.bilateralFilter(mask_gray, 11, 17, 17)
         cnts, _ = cv2.findContours(mask_gray.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # or cv2.RETR_TREE
-        # if (len(cnts) > 3 or len(cnts) == 0) and detail_name != "hand":
-        #     return np.nan
+        if len(cnts) == 0:
+            return np.nan
         cnts = sorted(cnts, key=cv2.contourArea, reverse=False)[:]  # Отсортировали контуры по площади контура
                                                                         # и выбрали 10 самых больших.
         for c in cnts:
