@@ -260,7 +260,7 @@ class BacksGeneration(Dict4Json):
             file_name = f'img_{id}'
             self.write_yolo_txt(d, file_name, a)
             cv2.imwrite(f'{self.generated_images}/{file_name}.jpg', img)
-            yield id / photo_num
+            yield (id + 1) / photo_num
         output.close()
         print("Time:", time.time() - start)
 

@@ -46,9 +46,11 @@ Item {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         onClicked: {
+            button2.enabled = false
+            button3.enabled = false
             manager.filtration()
             manager.backsGeneration()
-            step3generation.gotoMainView()
+            //step3generation.gotoMainView()
         }
     }
     Loader {
@@ -61,4 +63,10 @@ Item {
         step3generation.gotoMainView()
     }
     Keys.onEscapePressed: step3generation.gotoPhotoNum()
+    Connections {
+        target: manager
+        onBacksGenerationEnded: {
+            step3generation.gotoMainView()
+        }
+    }
 }

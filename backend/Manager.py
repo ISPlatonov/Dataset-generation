@@ -18,6 +18,7 @@ class Manager(QObject):
     cameraNumChanged = Signal()
     hsEnded = Signal()
     hsStatusChanged = Signal()
+    backsGenerationEnded = Signal()
 
 
     def __init__(self):
@@ -99,11 +100,6 @@ class Manager(QObject):
         os.mkdir(self.get_images_path() + '/' + dirname)
     
 
-    def hsStep(self):
-        for status in self.hs.main_job(self.hsEnded):
-            self.set_hsStatus(status)
-    
-
     def increment_hsStatus(self, increment):
         self.hsStatus += increment
 
@@ -120,12 +116,17 @@ class Manager(QObject):
         self.filter.main_job()
     
 
-    @Slot()
-    def backsGeneration(self):
+    def backsGenerationStep(self):
         for percent in self.bg.main_job(int(self.photo_num)):
             print(f'backsGeneration percent: {percent}')
             self.set_backsGenerationPercent(percent)
-        #self.bg.main_job(int(self.photo_num))
+        self.backsGenerationEnded.emit()
+
+
+    @Slot()
+    def backsGeneration(self):
+        self.set_backsGenerationPercent(0.)
+        Thread(target=self.backsGenerationStep).start()
     
 
     @Slot("QVariant")
@@ -172,7 +173,7 @@ class Manager(QObject):
     def set_hsStatus(self, status):
         self._hsStatus = status
         self.hsStatusChanged.emit()
-
+    
     
     name_list = Property("QVariantList", fget=get_name_list, fset=set_name_list, notify=nameListChanged)
     images_path = Property("QVariant", fget=get_images_path, fset=set_images_path, notify=imagesPathChanged)
