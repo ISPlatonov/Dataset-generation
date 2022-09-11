@@ -10,6 +10,13 @@ def resize_specific_width_and_height(img, width, height):
     resized = cv2.resize(img, dim, interpolation=cv2.INTER_CUBIC)
     return resized
 
+def scale_image_in_percent(img, relation):
+    width = int(img.shape[1] * relation)
+    height = int(img.shape[0] * relation)
+    dim = (width, height)
+    resized = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
+    return resized
+
 def rotation(img, angle):
     #angle = int(random.uniform(-angle, angle))
     h, w = img.shape[:2]

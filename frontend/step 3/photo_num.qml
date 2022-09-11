@@ -5,28 +5,29 @@ import QtQuick.Layouts
 import QtQuick.Dialogs
 import Qt.labs.platform
 import QtQml
-/*
-Ручки:
-1) сколько фоток сделать на первом этапе
-1') куда сохранять фотки
-2) цветопорог
-3) директория с фонами
 
-2 этап: директория - ползунок - прогрессБар
-3 этап: директория с масками - директория с фонами - прогрессБар
-*/
+
 Item {
-    id: step2dir
-    signal gotoMainView()
-    signal gotoThreshold()
-    Button {
+    id: step3photo_num
+    //signal gotoMainView()
+    signal gotoGeneration()
+    signal gotoBacks()
+    TextField {
         id: button1
-        text: qsTr("Выбрать папку с фото деталей")
+        validator: IntValidator {
+            bottom: 1;
+        }
+        text: manager.photo_num
+        focus: true
+        horizontalAlignment: TextInput.AlignHCenter
+        verticalAlignment: TextInput.AlignVCenter
+        font.pointSize: 24
         width: (parent.width / 2)
         anchors.centerIn: parent
         height: manager.config.graphics.unit_height
-        onClicked: {
-            fileDialog.open()
+        onTextEdited: {
+            manager.photo_num = text
+            console.log("photo num = " + text)
         }
     }
     Button {
@@ -36,7 +37,7 @@ Item {
         anchors.margins: 20
         anchors.left: parent.left
         anchors.bottom: parent.bottom
-        onClicked: step2dir.gotoMainView()
+        onClicked: step3photo_num.gotoBacks()
     }
     Button {
         id: button3
@@ -45,15 +46,19 @@ Item {
         anchors.margins: 20
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        onClicked: step2dir.gotoThreshold()
+        onClicked: step3photo_num.gotoGeneration()
     }
-    FolderDialog  {
+    FolderDialog {
         id: fileDialog
         //nameFilters: ["*/"]
         //selectFolder: true
     }
     Loader {
-        id: dirloader
+        id: backsloader
         anchors.fill: parent
     }
+    Keys.onUpPressed: manager.photo_num++
+    Keys.onDownPressed: manager.photo_num--
+    Keys.onEnterPressed: step3photo_num.gotoGeneration()
+    Keys.onEscapePressed: step3photo_num.gotoBacks()
 }

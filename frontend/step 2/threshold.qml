@@ -1,9 +1,10 @@
-import QtQuick 2.12
-import QtQuick.Window 2.12
-import QtQuick.Controls 2.0
-import QtQuick.Layouts 1.0
-import QtQuick.Dialogs 1.2
-import QtQml 2.0
+import QtQuick
+import QtQuick.Window
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQuick.Dialogs
+import Qt.labs.platform
+import QtQml
 /*
 1) Загрузить фотку
 2) Привязать ползунок к фотке (цветопорог)
@@ -13,13 +14,24 @@ Item {
     signal gotoMainView()
     signal gotoStep2()
     signal gotoStep3()
+    signal hsEnded()
     //signal handSegmentor()
-    Image {
+    /*Image {
         id: photoPreview
         width: parent.width
         height: parent.height
         anchors.margins: 100
-        source: "batman_001.jpg"
+        source: "images/biba/biba_000.jpg" // manager.images_path + "/" + manager.name_list[0] + "/" + manager.name_list[0] + "_000.jpg"
+    }*/
+    Column {
+        anchors.centerIn: parent
+        spacing: 2
+        Text {
+            text: qsTr("Фильтрация деталей...")
+        }
+        ProgressBar {
+            value: manager.hsStatus
+        }
     }
     Button {
         id: button1
@@ -30,7 +42,11 @@ Item {
         anchors.bottom: parent.bottom
         onClicked: {
             manager.handSegmentor()
-            gotoStep3()
+            //console.log("path to image: " + manager.images_path + "/" + manager.name_list[0] + "/" + manager.name_list[0] + "_000.jpg")
+            //gotoStep3()
+            button1.enabled = false
+            button2.enabled = false
+            slider.enabled = false
         }
     }
     Button {
@@ -51,5 +67,12 @@ Item {
     Loader {
         id: thresholdloader
         anchors.fill: parent
+    }
+    Connections {
+        target: manager
+ 
+        onHsEnded: {
+            gotoStep3()
+        }
     }
 }

@@ -8,18 +8,13 @@ from PIL import Image, ImageStat
 import PIL
 from pycocotools.coco import COCO
 from tqdm import trange
-#from PySide2.QtCore import Property, QCoreApplication, QObject, Qt, Signal, QStringListModel, QJsonValue, Slot
-
-
-# словарь классов распознаваемых объектов, пока что глобальная переменная
-# ОЧЕНЬ НЕ НРАВИТСЯ; нужно смотреть четез os.listdir(path_to_photos)
-#labels = [{"id": 0, "name": "asd"}, {"id": 1, "name": "sddf"}, {"id": 2, "name": "hand"}]
+from threading import Thread, active_count
+from PySide6.QtCore import Signal
 
 
 class HandSegmentor:
 
     def __init__(self, config):
-        #super(HandSegmentor, self).__init__()
         self.filepath =  config["filepath"] # для тестирования на конкретном фото
         self.filename = config["filename"]  # для тестирования на конкретном фото
         self.cur_detail_path = self.filepath + self.filename
@@ -45,6 +40,8 @@ class HandSegmentor:
             names_list.remove('processed')
         if '.gitignore' in names_list:
             names_list.remove('.gitignore')
+        if 'generated_images' in names_list:
+            names_list.remove('generated_images')
         
         self.labels = list()
         for i in range(len(names_list)):
@@ -53,25 +50,38 @@ class HandSegmentor:
         print(f'self.labels: {self.labels}')
 
 
-    def main_job(self):
+    def main_job(self, signal, increment_hsStatus):
+        #print(f'init active_count: {active_count()}')
         try:
             os.makedirs(self.processed_dir)
         except:
             pass
         # для обрабокти всей папки с подпапками с фото
-        for i in trange(len(self.labels) - 1):
+        photo_num = 0
+        for i in range(len(self.labels) - 1):
             my_path = self.root_dir_with_dirs + self.labels[i]["name"] + "/"
+            photo_num += len(os.listdir(my_path))
+        increment = 1 / photo_num
+        for i in trange(len(self.labels) - 1):
+            #print(f'\ni: {i}\n')
+            my_path = self.root_dir_with_dirs + self.labels[i]["name"] + "/"
+            threads = list()
             for filename in os.listdir(my_path):
+                #print(f'active_count: {active_count()}')
+                while active_count() >= os.cpu_count():
+                    pass
                 if filename[filename.rfind(".") + 1:] in ['jpg', 'png']:
                     self.cur_detail_path = my_path + filename
-                    self.mediapipe_hand_track(self.cur_detail_path, filename, self.output_dir,
+                    threads.append(Thread(target=self.mediapipe_hand_track, args=(self.cur_detail_path, filename, self.output_dir,
                                         self.empty_table_filepath_to_folder_,
-                                        self.empty_table_photo_name_,
-                                        eps=100, show=False, save=True, need_hand=self.need_hand)
+                                        self.empty_table_photo_name_,),
+                                        kwargs={'eps': 100, 'show': False, 'save': True, 'need_hand': self.need_hand, 'increment_hsStatus': increment_hsStatus, 'increment': increment}).start())
+            #yield (i + 1) / (len(self.labels) - 1)
         # папка со сгенерированными json файлами
         self.unite_many_jsons(self.processed_dir, self.labels)
         #unite_many_jsons_condition(test_dir, all_imgs_in_one_dir_together, labels)
         #delete_files_without_segmentation(all_imgs_in_one_dir_together)
+        signal.emit()
 
         
     # ID надо сделать членом класса -> уникальность
@@ -96,10 +106,10 @@ class HandSegmentor:
         for item in self.labels:
             names_to_category_id_dict[item["name"]] = item["id"]
         # проверка корректности переданного имени изображения, что оно есть в исходном словаре
-        print(f'file_name: {file_name}')
-        print(f'file_name[:-8]: {file_name[:-8]}, names_to_category_id_dict: {names_to_category_id_dict}')
-        if file_name[:-8] in names_to_category_id_dict:
-            category_id = names_to_category_id_dict[file_name[:-8]]
+        print('orig. name: ' + file_name + ', for json file_name: ' + file_name[:-file_name[::-1].find('_')-1])
+        #print(f'file_name[:-file_name[::-1].find('_')-1]: {file_name[:-file_name[::-1].find('_')-1]}, names_to_category_id_dict: {names_to_category_id_dict}')
+        if file_name[:-file_name[::-1].find('_')-1] in names_to_category_id_dict:
+            category_id = names_to_category_id_dict[file_name[:-file_name[::-1].find('_')-1]]
         else:
             raise Exception("Такого имени нет в словаре!")
         hand_category_id = names_to_category_id_dict["hand"]  # считываем id руки
@@ -155,7 +165,7 @@ class HandSegmentor:
 
 
     def mediapipe_hand_track(self, filepath, filename, output_dir, empty_table_filepath_to_folder,
-                            empty_table_photo_name, eps=100, show=False, save=False, need_hand=True):
+                            empty_table_photo_name, increment_hsStatus, increment, eps=100, show=False, save=False, need_hand=True):
         """
         Функция обработки изображения для выделения детали и руки и записи в json сгенерированных координат
         :param filepath: абсолютный путь до конкретного файла, например r'/Users/alexsoldatov/Desktop/Датасет_20_деталей_
@@ -201,17 +211,19 @@ class HandSegmentor:
             # u can change it imself
             x_max, y_max, x_min, y_min = max(x_landmark_coord), max(y_landmark_coord), min(x_landmark_coord), min(
                 y_landmark_coord)  # вписываем кисть в прямоугольник
+            w, h = x_max - x_min, y_max - y_min
+            eps = max(w, h) * 1
             hands.close()  # чистим память
             x_max, y_max, x_min, y_min = x_max + eps, y_max + eps, x_min - eps, y_min - eps  # отступаем от краев
 
         else:
             x_max, y_max, x_min, y_min = 200, 200, 100, 100
-            #x_max, y_max, x_min, y_min = x_max + eps, y_max + eps, x_min - eps, y_min - eps  # отступаем от краев
 
         roi = img_original[y_min:y_max, x_min:x_max]  # выделяем область интереса ROI
-        if roi.shape[0] == 0:
+        if roi.shape[0] == 0 or roi.shape[1] == 0:
             print("Область интереса ROI пуста")
             return 0
+        print(f'roi.shape: {roi.shape}')
         YCrCb = cv2.cvtColor(roi, cv2.COLOR_BGR2YCR_CB)  # преобразуем в пространство YCrCb
         (y, cr, cb) = cv2.split(YCrCb)  # выделяем значения Y, Cr, Cb
         cr1 = cv2.GaussianBlur(cr, (5, 5), 0)  # фильтр Гаусса для небольшого размытия
@@ -298,6 +310,7 @@ class HandSegmentor:
             if need_hand:
                 with open(folder_name_path + '/{}'.format(image_name) + '_landmarks', "w") as file1:
                     file1.write(str(results.multi_hand_landmarks))
+        increment_hsStatus(increment)
         return None
 
 
@@ -340,7 +353,7 @@ class HandSegmentor:
             my_dict['images'].append(images_list[i][0])
             my_dict['annotations'].append(annotations_list[i][0])
             my_dict['annotations'].append(annotations_list[i][1])
-        with open(directory_path + '/pack_of_dets_json.json', "w") as write_file:
+        with open('pack_of_dets_json.json', "w") as write_file:
             json.dump(my_dict, write_file)  # переводим словарь в формат json
 
 

@@ -1,19 +1,24 @@
-import QtQuick 2.12
-import QtQuick.Window 2.12
-import QtQuick.Controls 2.0
-import QtQuick.Layouts 1.0
-import QtQuick.Dialogs 1.2
-import QtQml 2.0
+import QtQuick
+import QtQuick.Window
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQuick.Dialogs
+import Qt.labs.platform
+import QtQml
+
+
 Item {
     id: step3backs
-    signal gotoMainView()
+    //signal gotoMainView()
     signal gotoGeneration()
+    signal gotoPhotoNum()
+    signal gotoStep3()
     Button {
         id: button1
         text: qsTr("Выбрать папку с фонами")
         width: (parent.width / 2)
         anchors.centerIn: parent
-        height: 50
+        height: manager.config.graphics.unit_height
         onClicked: {
             fileDialog.open()
         }
@@ -34,15 +39,17 @@ Item {
         anchors.margins: 20
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        onClicked: step3backs.gotoGeneration()
+        onClicked: step3backs.gotoPhotoNum()
     }
-    FileDialog {
+    FolderDialog {
         id: fileDialog
-        nameFilters: ["*/"]
-        selectFolder: true
+        //nameFilters: ["*/"]
+        //selectFolder: true
     }
     Loader {
         id: backsloader
         anchors.fill: parent
     }
+    Keys.onEnterPressed: step3backs.gotoPhotoNum()
+    Keys.onEscapePressed: step3backs.gotoStep3()
 }

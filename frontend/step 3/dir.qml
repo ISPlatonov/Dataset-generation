@@ -1,19 +1,23 @@
-import QtQuick 2.12
-import QtQuick.Window 2.12
-import QtQuick.Controls 2.0
-import QtQuick.Layouts 1.0
-import QtQuick.Dialogs 1.2
-import QtQml 2.0
+import QtQuick
+import QtQuick.Window
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQuick.Dialogs
+import Qt.labs.platform
+import QtQml
+
+
 Item {
     id: step3dir
     signal gotoMainView()
     signal gotoBacks()
+    focus: true
     Button {
         id: button1
         text: qsTr("Выбрать папку с масками деталей")
         width: (parent.width / 2)
         anchors.centerIn: parent
-        height: 50
+        height: manager.config.graphics.unit_height
         onClicked: {
             fileDialog.open()
         }
@@ -36,13 +40,19 @@ Item {
         anchors.bottom: parent.bottom
         onClicked: step3dir.gotoBacks()
     }
-    FileDialog {
+    FolderDialog {
         id: fileDialog
-        nameFilters: ["*/"]
-        selectFolder: true
+        //nameFilters: ["*/"]
+        //selectFolder: true
     }
     Loader {
         id: dirloader
         anchors.fill: parent
+    }
+    Keys.onEscapePressed: {
+        step3dir.gotoMainView()
+    }
+    Keys.onEnterPressed: {
+        step3dir.gotoBacks()
     }
 }

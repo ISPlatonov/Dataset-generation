@@ -1,28 +1,26 @@
-import QtQuick 2.12
-import QtQuick.Window 2.12
-import QtQuick.Controls 2.0
-import QtQuick.Dialogs 1.2
-import QtQml 2.0
-// Попытка сделать главную страницу
-/*
-1) Изменить кнопку "назад" так, чтобы не открывалось новое окно
-2) Добавить скрипт с камерой и соединить его со скриптом про список
-*/
-import QtQuick.Layouts 1.1
+import QtQuick
+import QtQuick.Window
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQml
+import QtQuick.Layouts
+import QtMultimedia
 
 import "."
 
 
 ApplicationWindow {
+    MediaDevices {
+        id: devices
+    }
     id: mainrect
     //color: Constants.backgroundColor
-    width: 480
-    height: 640
+    width: manager.config["graphics"]["window_size"]["width"]
+    height: manager.config["graphics"]["window_size"]["height"]
     visible: true
     title: qsTr("Dataset generator")
 
     // temp array for 1st step
-    //property var firstStepArray: ['qwe', 'wer', 'ert']
     property var name_list: manager.name_list
 
     Loader {
@@ -63,6 +61,7 @@ ApplicationWindow {
             //return step1camera.index
         }
         function onGotoThreshold() {
+            manager.hsStatus = 0
             mainLoader.source = "step 2/threshold.qml"
         }
         function onGotoBacks() {
@@ -70,6 +69,9 @@ ApplicationWindow {
         }
         function onGotoGeneration() {
             mainLoader.source = "step 3/generation.qml"
+        }
+        function onGotoPhotoNum() {
+            mainLoader.source = "step 3/photo_num.qml"
         }
         /*onLoadArray: {
             item.getArray(mainrect.firstStepArray)
