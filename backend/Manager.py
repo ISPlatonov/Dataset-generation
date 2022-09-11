@@ -17,6 +17,7 @@ class Manager(QObject):
     backsGenerationPercentChanged = Signal()
     cameraNumChanged = Signal()
     hsEnded = Signal()
+    hsStatusChanged = Signal()
 
 
     def __init__(self):
@@ -34,6 +35,7 @@ class Manager(QObject):
         self._photo_num = self._config['photo_num']
         self._backsGenerationPercent = 0.
         self._camera_num = self._config["camera_num"]
+        self._hsStatus = 0.
     
 
     def set_name_list(self, name_list):
@@ -97,9 +99,20 @@ class Manager(QObject):
         os.mkdir(self.get_images_path() + '/' + dirname)
     
 
+    def hsStep(self):
+        for status in self.hs.main_job(self.hsEnded):
+            self.set_hsStatus(status)
+    
+
+    def increment_hsStatus(self, increment):
+        self.hsStatus += increment
+
+
     @Slot()
     def handSegmentor(self):
-        Thread(target=self.hs.main_job, args=(self.hsEnded,)).start()
+        self.set_hsStatus(0.)
+        #Thread(target=self.hs.main_job, args=(self.hsEnded,)).start()
+        Thread(target=self.hs.main_job, args=(self.hsEnded, self.increment_hsStatus)).start()
     
 
     @Slot()
@@ -149,6 +162,16 @@ class Manager(QObject):
     def set_camera_num(self, camera_num):
         self._camera_num = camera_num
         self.cameraNumChanged.emit()
+    
+
+    def get_hsStatus(self):
+        return self._hsStatus
+    
+
+    @Slot("QVariant")
+    def set_hsStatus(self, status):
+        self._hsStatus = status
+        self.hsStatusChanged.emit()
 
     
     name_list = Property("QVariantList", fget=get_name_list, fset=set_name_list, notify=nameListChanged)
@@ -157,3 +180,4 @@ class Manager(QObject):
     photo_num = Property("QVariant", fget=get_photo_num, fset=set_photo_num, notify=photoNumChanged)
     camera_num = Property("QVariant", fget=get_camera_num, fset=set_camera_num, notify=cameraNumChanged)
     backsGenerationPercent = Property("QVariant", fget=get_backsGenerationPercent, fset=set_backsGenerationPercent, notify=backsGenerationPercentChanged)
+    hsStatus = Property("QVariant", fget=get_hsStatus, fset=set_hsStatus, notify=hsStatusChanged)

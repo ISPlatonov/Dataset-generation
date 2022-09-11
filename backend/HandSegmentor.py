@@ -50,18 +50,24 @@ class HandSegmentor:
         print(f'self.labels: {self.labels}')
 
 
-    def main_job(self, signal):
-        print(f'init active_count: {active_count()}')
+    def main_job(self, signal, increment_hsStatus):
+        #print(f'init active_count: {active_count()}')
         try:
             os.makedirs(self.processed_dir)
         except:
             pass
         # для обрабокти всей папки с подпапками с фото
+        photo_num = 0
+        for i in range(len(self.labels) - 1):
+            my_path = self.root_dir_with_dirs + self.labels[i]["name"] + "/"
+            photo_num += len(os.listdir(my_path))
+        increment = 1 / photo_num
         for i in trange(len(self.labels) - 1):
+            #print(f'\ni: {i}\n')
             my_path = self.root_dir_with_dirs + self.labels[i]["name"] + "/"
             threads = list()
             for filename in os.listdir(my_path):
-                print(f'active_count: {active_count()}')
+                #print(f'active_count: {active_count()}')
                 while active_count() >= os.cpu_count():
                     pass
                 if filename[filename.rfind(".") + 1:] in ['jpg', 'png']:
@@ -69,7 +75,8 @@ class HandSegmentor:
                     threads.append(Thread(target=self.mediapipe_hand_track, args=(self.cur_detail_path, filename, self.output_dir,
                                         self.empty_table_filepath_to_folder_,
                                         self.empty_table_photo_name_,),
-                                        kwargs={'eps': 100, 'show': False, 'save': True, 'need_hand': self.need_hand}).start())
+                                        kwargs={'eps': 100, 'show': False, 'save': True, 'need_hand': self.need_hand, 'increment_hsStatus': increment_hsStatus, 'increment': increment}).start())
+            #yield (i + 1) / (len(self.labels) - 1)
         # папка со сгенерированными json файлами
         self.unite_many_jsons(self.processed_dir, self.labels)
         #unite_many_jsons_condition(test_dir, all_imgs_in_one_dir_together, labels)
@@ -158,7 +165,7 @@ class HandSegmentor:
 
 
     def mediapipe_hand_track(self, filepath, filename, output_dir, empty_table_filepath_to_folder,
-                            empty_table_photo_name, eps=100, show=False, save=False, need_hand=True):
+                            empty_table_photo_name, increment_hsStatus, increment, eps=100, show=False, save=False, need_hand=True):
         """
         Функция обработки изображения для выделения детали и руки и записи в json сгенерированных координат
         :param filepath: абсолютный путь до конкретного файла, например r'/Users/alexsoldatov/Desktop/Датасет_20_деталей_
@@ -303,6 +310,7 @@ class HandSegmentor:
             if need_hand:
                 with open(folder_name_path + '/{}'.format(image_name) + '_landmarks', "w") as file1:
                     file1.write(str(results.multi_hand_landmarks))
+        increment_hsStatus(increment)
         return None
 
 

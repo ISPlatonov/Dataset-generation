@@ -61,6 +61,7 @@ ApplicationWindow {
             //return step1camera.index
         }
         function onGotoThreshold() {
+            manager.hsStatus = 0
             mainLoader.source = "step 2/threshold.qml"
         }
         function onGotoBacks() {

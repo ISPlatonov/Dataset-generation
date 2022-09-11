@@ -23,6 +23,16 @@ Item {
         anchors.margins: 100
         source: "images/biba/biba_000.jpg" // manager.images_path + "/" + manager.name_list[0] + "/" + manager.name_list[0] + "_000.jpg"
     }*/
+    Column {
+        anchors.centerIn: parent
+        spacing: 2
+        Text {
+            text: qsTr("Фильтрация деталей...")
+        }
+        ProgressBar {
+            value: manager.hsStatus
+        }
+    }
     Button {
         id: button1
         text: qsTr("Подтвердить")
