@@ -220,7 +220,7 @@ class HandSegmentor:
             x_max, y_max, x_min, y_min = 200, 200, 100, 100
 
         roi = img_original[y_min:y_max, x_min:x_max]  # выделяем область интереса ROI
-        if roi.shape[0] == 0 or roi.shape[1] == 0:
+        if roi.shape[0] < 200 or roi.shape[1] < 200:
             print("Область интереса ROI пуста")
             return 0
         print(f'roi.shape: {roi.shape}')

@@ -33,7 +33,7 @@ class Manager(QObject):
         self.hs = HandSegmentor(self._config)
         self.filter = Filtration(self._config)
         self.bg = BacksGeneration(self._config)
-        self._photo_num = self._config['photo_num']
+        self._photo_num = self._config['generation_backs']['photo_num']
         self._backsGenerationPercent = 0.
         self._camera_num = self._config["camera_num"]
         self._hsStatus = 0.
