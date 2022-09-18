@@ -8,12 +8,17 @@ class Filtration:
     def __init__(self, config):
         self.processed_path = config['processed_path']
         self.all_details_names = os.listdir(config['filepath'])
+        self.threshold = config['filtration']['blurry_threshold']
         if 'Blank_surface' in self.all_details_names:
             self.all_details_names.remove('Blank_surface')
         if 'processed' in self.all_details_names:
             self.all_details_names.remove('processed')
         if '.gitignore' in self.all_details_names:
             self.all_details_names.remove('.gitignore')
+
+
+    def variance_of_laplacian(self, image):
+        return cv2.Laplacian(image, cv2.CV_64F).var()
 
 
     def get_approx(self, black_and_white_mask):
@@ -73,6 +78,14 @@ class Filtration:
                     for name in dirs:
                         os.rmdir(os.path.join(root, name))
                 os.rmdir(f'{self.processed_path}/{dir}/')
+
+            image = cv2.imread(f'{self.processed_path}/{dir}/{dir}.jpg')
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            fm = self.variance_of_laplacian(gray)
+            if fm < self.threshold:
+                print(f'{dir}.jpg - blurry, fm = {fm}')
+            else:
+                print(f'{dir}.jpg - not blurry, fm = {fm}')
 
 
     def empty_dir_filtration(self):

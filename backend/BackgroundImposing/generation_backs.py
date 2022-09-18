@@ -5,10 +5,6 @@ import json
 from backend.BackgroundImposing.dict4json import Dict4Json
 from backend.BackgroundImposing.augmentations import *
 from backend.BackgroundImposing.paths import *
-"""
-1) print time
-2) 
-"""
 
 class BacksGeneration(Dict4Json):
 
@@ -210,10 +206,6 @@ class BacksGeneration(Dict4Json):
             print("Approx is empty")
             return img, masks_array, d, detail_num, square, timee
         yolo_points = self.get_yolo_points(approx)
-        # while img.shape[0] > self.height or img.shape[1] > self.width:
-        #     print("Scaling in percent...")
-        #     print(f'img.shape: {img.shape}')
-        #     img = scale_image_in_percent(img, 0.9)
         sdvig_x, sdvig_y = self.get_shifts(img, mask)
         rect = [yolo_points[0] + sdvig_x, yolo_points[1] + sdvig_y, yolo_points[2] + sdvig_x, yolo_points[3] + sdvig_y]
         square += (yolo_points[2] - yolo_points[0]) * (yolo_points[3] - yolo_points[1])
@@ -231,7 +223,6 @@ class BacksGeneration(Dict4Json):
 
 
     def main_job(self, photo_num):
-        # print(os.getcwd() + "\n")
         output = open(f'step 3 output.txt', 'w+')
         name_back = self.backgrounds + '/' + str(1) + ".jpg"
         img = cv2.imread(name_back)
@@ -254,7 +245,6 @@ class BacksGeneration(Dict4Json):
             print(f'amount of details is {a} for img_{id}\n')
             detail_num = 0
             while detail_num < a and square < max_square:
-                # print(f'detail_num: {detail_num}')
                 if detail_num <= 0:
                     d = {}
                 j = int(random.uniform(0, len(self.all_details_names)))  # номер детали из комплекта

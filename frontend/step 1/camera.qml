@@ -31,14 +31,20 @@ Item {
     }
 
 
-    Text {
-        id: titleText
-        anchors.top: parent
+    ColumnLayout {
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.margins: 50
-        text: qsTr("Сделайте фотографии детали " + manager.name_list[index])
+        Text {
+            id: titleText
+            anchors.top: parent
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.margins: 50
+            text: qsTr("Сделайте фотографии детали " + manager.name_list[index])
+        }
+        ProgressBar {
+            anchors.horizontalCenter: parent.horizontalCenter
+            value: (step1camera.i / manager.config["snapshots"]["snapshots_number"]) // manager.hsStatus
+        }
     }
-
 
     CaptureSession {
         imageCapture : ImageCapture {
@@ -121,7 +127,6 @@ Item {
         anchors.bottom: parent.bottom
         onClicked: step1camera.gotoStep1()
     }
-
 
     MediaDevices {
         id: devices

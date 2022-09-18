@@ -30,6 +30,8 @@ class HandSegmentor:
         #all_imgs_in_one_dir_together = filepath + 'Blank_surface/ALL_imgs_copy(2)/'
         self.processed_dir = self.filepath + 'processed'
         self.need_hand = config["need_hand"]
+        self.min_roi_height = config["roi"]["height"]
+        self.min_roi_width = config["roi"]["width"]
 
         names_list = os.listdir(self.filepath)
         if 'backgrounds' in names_list:
@@ -220,7 +222,7 @@ class HandSegmentor:
             x_max, y_max, x_min, y_min = 200, 200, 100, 100
 
         roi = img_original[y_min:y_max, x_min:x_max]  # выделяем область интереса ROI
-        if roi.shape[0] < 200 or roi.shape[1] < 200:
+        if roi.shape[0] < self.min_roi_height or roi.shape[1] < self.min_roi_width:
             print("Область интереса ROI пуста")
             return 0
         print(f'roi.shape: {roi.shape}')
