@@ -10,6 +10,7 @@ from pycocotools.coco import COCO
 from tqdm import trange
 from threading import Thread, active_count
 from PySide6.QtCore import Signal
+from memory_profiler import profile
 
 
 class HandSegmentor:
@@ -17,7 +18,7 @@ class HandSegmentor:
     def __init__(self, config):
         self.filepath =  config["filepath"] # для тестирования на конкретном фото
         self.filename = config["filename"]  # для тестирования на конкретном фото
-        self.cur_detail_path = self.filepath + self.filename
+        #self.cur_detail_path = self.filepath + self.filename
         # путь до эталонного фото пустого стола
         self.empty_table_filepath_to_folder_ = self.filepath + 'Blank_surface/'
         self.empty_table_photo_name_ = config["empty_table_photo_name_"]
@@ -52,6 +53,7 @@ class HandSegmentor:
         print(f'self.labels: {self.labels}')
 
 
+    @profile
     def main_job(self, signal, increment_hsStatus):
         #print(f'init active_count: {active_count()}')
         try:
@@ -64,26 +66,42 @@ class HandSegmentor:
             my_path = self.root_dir_with_dirs + self.labels[i]["name"] + "/"
             photo_num += len(os.listdir(my_path))
         increment = 1 / photo_num
-        for i in trange(len(self.labels) - 1):
+        for i in range(len(self.labels) - 1):
             #print(f'\ni: {i}\n')
             my_path = self.root_dir_with_dirs + self.labels[i]["name"] + "/"
-            threads = list()
-            for filename in os.listdir(my_path):
-                #print(f'active_count: {active_count()}')
-                while active_count() >= os.cpu_count():
-                    pass
-                if filename[filename.rfind(".") + 1:] in ['jpg', 'png']:
-                    self.cur_detail_path = my_path + filename
-                    threads.append(Thread(target=self.mediapipe_hand_track, args=(self.cur_detail_path, filename, self.output_dir,
-                                        self.empty_table_filepath_to_folder_,
-                                        self.empty_table_photo_name_,),
-                                        kwargs={'eps': 100, 'show': False, 'save': True, 'need_hand': self.need_hand, 'increment_hsStatus': increment_hsStatus, 'increment': increment}).start())
-            #yield (i + 1) / (len(self.labels) - 1)
+            for filename_batch in self.batch(os.listdir(my_path), os.cpu_count() - active_count()):
+                thread_batch = list()
+                for filename in filename_batch:
+                    if filename[filename.rfind(".") + 1:] in ['jpg', 'png']:
+                        cur_detail_path = my_path + filename   # !!!
+                        thread_batch.append(Thread(target=self.mediapipe_hand_track, args=(cur_detail_path, filename, self.output_dir,
+                                                self.empty_table_filepath_to_folder_,
+                                                self.empty_table_photo_name_,),
+                                                kwargs={'eps': 100, 'show': False, 'save': True, 'need_hand': self.need_hand, 'increment_hsStatus': increment_hsStatus, 'increment': increment})
+                        )
+                for thread in thread_batch:
+                    thread.start()
+                for thread in thread_batch:
+                    thread.join()
+                thread_batch.clear()
+                # install muppy
+                # Add to leaky code within python_script_being_profiled.py
+                #all_objects = muppy.get_objects()
+                #sum1 = summary.summarize(all_objects)
+                ## Prints out a summary of the large objects
+                #summary.print_(sum1)
+                # Get references to certain types of objects such as dataframe
         # папка со сгенерированными json файлами
         self.unite_many_jsons(self.processed_dir, self.labels)
         #unite_many_jsons_condition(test_dir, all_imgs_in_one_dir_together, labels)
         #delete_files_without_segmentation(all_imgs_in_one_dir_together)
         signal.emit()
+    
+
+    def batch(self, iterable, n=1):
+        l = len(iterable)
+        for ndx in range(0, l, n):
+            yield iterable[ndx:min(ndx + n, l)]
 
         
     # ID надо сделать членом класса -> уникальность
@@ -209,7 +227,9 @@ class HandSegmentor:
                     mpDraw.draw_landmarks(img, handLms, mpHands.HAND_CONNECTIONS)  # отрисовываем скелет кисти руки
             else:
                 print(f'Рука на фотографии {filename} не была найдена!')
-                return 0
+                hands.close()  # чистим память
+                increment_hsStatus(increment)
+                return
             # u can change it imself
             x_max, y_max, x_min, y_min = max(x_landmark_coord), max(y_landmark_coord), min(x_landmark_coord), min(
                 y_landmark_coord)  # вписываем кисть в прямоугольник
@@ -224,7 +244,8 @@ class HandSegmentor:
         roi = img_original[y_min:y_max, x_min:x_max]  # выделяем область интереса ROI
         if roi.shape[0] < self.min_roi_height or roi.shape[1] < self.min_roi_width:
             print("Область интереса ROI пуста")
-            return 0
+            increment_hsStatus(increment)
+            return
         print(f'roi.shape: {roi.shape}')
         YCrCb = cv2.cvtColor(roi, cv2.COLOR_BGR2YCR_CB)  # преобразуем в пространство YCrCb
         (y, cr, cb) = cv2.split(YCrCb)  # выделяем значения Y, Cr, Cb
@@ -275,7 +296,8 @@ class HandSegmentor:
                 # при 0.15 уже может получится квадрат из исходного множества
                 # точек, аппроксимирующих шестеренку, в cnts
         else:
-            return 0
+            increment_hsStatus(increment)
+            return
         # Таким образом, получили массив  approx, приближающих границы маски
         # Далее переведем точки в словарь d и передадим словарь в json-файл "data_file.json"
         d, yolo_points = self.json_dictionary(filename, approx, x_min, y_min, x_max, y_max)
@@ -313,7 +335,8 @@ class HandSegmentor:
                 with open(folder_name_path + '/{}'.format(image_name) + '_landmarks', "w") as file1:
                     file1.write(str(results.multi_hand_landmarks))
         increment_hsStatus(increment)
-        return None
+        #print(f'--- {filename} filtration is done ---')
+        return
 
 
     def unite_many_jsons(self, directory_path, labels):

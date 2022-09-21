@@ -1,16 +1,16 @@
 {
-    "images_path": "images_3",
+    "images_path": "images",
     "name_list": ["batman", "bolshoy_grover", "bolshoy_podshipnik", "dvernoye_koltso", "grib", "koltso",
                   "krylo", "malenkiy_podshipnik", "nlo", "pruzhina", "roochka", "shesterenka", "sterzhen",
                   "tolstaya_gayka", "tolstaya_shaiba", "tolstoye_koltso", "tonkaya_gayka", "tonkaya_shaiba",
                   "vint", "vtulka"
                  ],
 
-    "filepath": "images_3/",
+    "filepath": "images/",
     "filename": "biba/0.jpg",
-    "backgrounds": "images_3/backgrounds",
-    "processed_path": "images_3/processed",
-    "generated_images": "images_3/generated_images",
+    "backgrounds": "images/backgrounds",
+    "processed_path": "images/processed",
+    "generated_images": "images/generated_images",
     "empty_table_photo_name_": "empty_table.jpg",
     "need_hand": true,
     "camera_num": 0,
