@@ -1,6 +1,7 @@
 import json
 import os
 from threading import Thread
+from time import sleep
 
 from PySide6.QtCore import Property, QObject, Signal, Slot
 
@@ -76,6 +77,11 @@ class Manager(QObject):
         self.nameListChanged.emit()
 
 
+    @Slot("QVariant")
+    def sleepFor(self, secs):
+        sleep(secs)
+
+
     def __get_images_path(self):
         return os.path.abspath(self._images_path)
 
@@ -96,9 +102,9 @@ class Manager(QObject):
 
     @Slot("QVariant")
     def makeDir(self, dirname):
-        if dirname in os.listdir(self.get_images_path()):
+        if dirname in os.listdir(self.images_path):
             return
-        os.mkdir(self.get_images_path() + '/' + dirname)
+        os.mkdir(self.images_path + '/' + dirname)
 
 
     def increment_hsStatus(self, increment):
