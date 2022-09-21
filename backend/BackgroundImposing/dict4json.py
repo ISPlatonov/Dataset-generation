@@ -1,5 +1,6 @@
 import cv2
-import json, os
+import json
+import os
 
 
 class Dict4Json:
@@ -21,7 +22,7 @@ class Dict4Json:
         self.generated_images = config['generated_images']
         self.names_to_category_id_dict = dict()
         for i in range(len(self.all_details_names)):
-            self.names_to_category_id_dict[self.all_details_names[i]] = i + 1    # i + 1?
+            self.names_to_category_id_dict[self.all_details_names[i]] = i + 1
 
 
     def img_with_rectangle(self, img, rect):

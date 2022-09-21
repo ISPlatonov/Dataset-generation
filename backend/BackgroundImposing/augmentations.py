@@ -2,13 +2,13 @@ import random
 import cv2
 import numpy as np
 
-# source: https://towardsdatascience.com/complete-image-augmentation-in-opencv-31a6b02694f5
 
 def resize_specific_width_and_height(img, width, height):
     dim = (width, height)
     # resize image
     resized = cv2.resize(img, dim, interpolation=cv2.INTER_CUBIC)
     return resized
+
 
 def scale_image_in_percent(img, relation):
     width = int(img.shape[1] * relation)
@@ -17,6 +17,7 @@ def scale_image_in_percent(img, relation):
     resized = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
     return resized
 
+
 def rotation(img, angle):
     #angle = int(random.uniform(-angle, angle))
     h, w = img.shape[:2]
@@ -24,17 +25,20 @@ def rotation(img, angle):
     img = cv2.warpAffine(img, M, (w, h))
     return img
 
+
 def vertical_flip(img, flag):
     if flag:
         return cv2.flip(img, 0)
     else:
         return img
 
+
 def horizontal_flip(img, flag):
     if flag:
         return cv2.flip(img, 1)
     else:
         return img
+
 
 def brightness(img, low, high):
     value = random.uniform(low, high)
@@ -47,6 +51,7 @@ def brightness(img, low, high):
     hsv = np.array(hsv, dtype = np.uint8)
     img = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
     return img
+
 
 def apply_augmentations(detail, mask, vert_flip=0, horiz_flip=0, rot=0):
     if vert_flip:

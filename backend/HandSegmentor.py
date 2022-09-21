@@ -2,15 +2,12 @@ import cv2
 import mediapipe as mp  # библиотека для отслеживания рук
 import os
 import numpy as np
-import errno
 import json
-from PIL import Image, ImageStat
+from PIL import ImageStat
 import PIL
 from pycocotools.coco import COCO
-from tqdm import trange
 from threading import Thread, active_count
 from PySide6.QtCore import Signal
-from memory_profiler import profile
 
 
 class HandSegmentor:
@@ -18,22 +15,17 @@ class HandSegmentor:
     def __init__(self, config):
         self.filepath =  config["filepath"] # для тестирования на конкретном фото
         self.filename = config["filename"]  # для тестирования на конкретном фото
-        #self.cur_detail_path = self.filepath + self.filename
         # путь до эталонного фото пустого стола
         self.empty_table_filepath_to_folder_ = self.filepath + 'Blank_surface/'
         self.empty_table_photo_name_ = config["empty_table_photo_name_"]
         # путь для записи папок с сгенерировнными json файлами и промежуточными масками
         self.output_dir = self.filepath + 'processed/'
         # для тестирования на конкретном фото
-        # mediapipe_hand_track(cur_detail_path, filename, output_dir, empty_table_filepath_to_folder_,
-        #                      empty_table_photo_name_, eps=100, show=False, save=True)
         self.root_dir_with_dirs = self.filepath
-        #all_imgs_in_one_dir_together = filepath + 'Blank_surface/ALL_imgs_copy(2)/'
         self.processed_dir = self.filepath + 'processed'
         self.need_hand = config["need_hand"]
         self.min_roi_height = config["roi"]["height"]
         self.min_roi_width = config["roi"]["width"]
-
         names_list = os.listdir(self.filepath)
         if 'backgrounds' in names_list:
             names_list.remove('backgrounds')
@@ -45,17 +37,13 @@ class HandSegmentor:
             names_list.remove('.gitignore')
         if 'generated_images' in names_list:
             names_list.remove('generated_images')
-        
         self.labels = list()
         for i in range(len(names_list)):
             self.labels.append({'id':str(i), 'name': names_list[i]})
         self.labels.append({'id':str(len(names_list)), 'name': 'hand'})
-        print(f'self.labels: {self.labels}')
 
 
-    @profile
     def main_job(self, signal, increment_hsStatus):
-        #print(f'init active_count: {active_count()}')
         try:
             os.makedirs(self.processed_dir)
         except:
@@ -67,30 +55,27 @@ class HandSegmentor:
             photo_num += len(os.listdir(my_path))
         increment = 1 / photo_num
         for i in range(len(self.labels) - 1):
-            #print(f'\ni: {i}\n')
             my_path = self.root_dir_with_dirs + self.labels[i]["name"] + "/"
             for filename_batch in self.batch(os.listdir(my_path), os.cpu_count() - active_count()):
                 thread_batch = list()
                 for filename in filename_batch:
                     if filename[filename.rfind(".") + 1:] in ['jpg', 'png']:
                         cur_detail_path = my_path + filename   # !!!
-                        thread_batch.append(Thread(target=self.mediapipe_hand_track, args=(cur_detail_path, filename, self.output_dir,
+                        thread_batch.append(Thread(
+                                                target=self.mediapipe_hand_track,
+                                                args=(cur_detail_path, filename, self.output_dir,
                                                 self.empty_table_filepath_to_folder_,
                                                 self.empty_table_photo_name_,),
-                                                kwargs={'eps': 100, 'show': False, 'save': True, 'need_hand': self.need_hand, 'increment_hsStatus': increment_hsStatus, 'increment': increment})
-                        )
+                                                kwargs={'eps': 100, 'show': False, 'save': True,
+                                                'need_hand': self.need_hand,
+                                                'increment_hsStatus': increment_hsStatus,
+                                                'increment': increment})
+                                           )
                 for thread in thread_batch:
                     thread.start()
                 for thread in thread_batch:
                     thread.join()
                 thread_batch.clear()
-                # install muppy
-                # Add to leaky code within python_script_being_profiled.py
-                #all_objects = muppy.get_objects()
-                #sum1 = summary.summarize(all_objects)
-                ## Prints out a summary of the large objects
-                #summary.print_(sum1)
-                # Get references to certain types of objects such as dataframe
         # папка со сгенерированными json файлами
         self.unite_many_jsons(self.processed_dir, self.labels)
         #unite_many_jsons_condition(test_dir, all_imgs_in_one_dir_together, labels)
@@ -127,7 +112,6 @@ class HandSegmentor:
             names_to_category_id_dict[item["name"]] = item["id"]
         # проверка корректности переданного имени изображения, что оно есть в исходном словаре
         print('orig. name: ' + file_name + ', for json file_name: ' + file_name[:-file_name[::-1].find('_')-1])
-        #print(f'file_name[:-file_name[::-1].find('_')-1]: {file_name[:-file_name[::-1].find('_')-1]}, names_to_category_id_dict: {names_to_category_id_dict}')
         if file_name[:-file_name[::-1].find('_')-1] in names_to_category_id_dict:
             category_id = names_to_category_id_dict[file_name[:-file_name[::-1].find('_')-1]]
         else:
@@ -200,14 +184,14 @@ class HandSegmentor:
         :param save: bool, необходимость сохранения результатов, включая промежуточные
         :return: None
         """
-        image_name = filename[:-4] # +
-        empty_table_path = empty_table_filepath_to_folder + empty_table_photo_name # +
-        if empty_table_photo_name not in os.listdir(empty_table_filepath_to_folder): # +
-            raise Exception('Фотография пустого стола не была найдена в папке!')  # +
-        img = cv2.imread(filepath)  # считывание текущего изображения +
-        img_original = img.copy() # +
-        imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # конвертируем в RGB +
-        x_landmark_coord, y_landmark_coord = [], [] # +
+        image_name = filename[:-4]
+        empty_table_path = empty_table_filepath_to_folder + empty_table_photo_name
+        if empty_table_photo_name not in os.listdir(empty_table_filepath_to_folder):
+            raise Exception('Фотография пустого стола не была найдена в папке!')
+        img = cv2.imread(filepath)  # считывание текущего изображения
+        img_original = img.copy()
+        imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # конвертируем в RGB
+        x_landmark_coord, y_landmark_coord = [], []
 
         if need_hand:
             mpHands = mp.solutions.hands  # объект класса для распознавания рук на фотографии
@@ -226,27 +210,21 @@ class HandSegmentor:
                         y_landmark_coord.append(cy)
                     mpDraw.draw_landmarks(img, handLms, mpHands.HAND_CONNECTIONS)  # отрисовываем скелет кисти руки
             else:
-                print(f'Рука на фотографии {filename} не была найдена!')
                 hands.close()  # чистим память
                 increment_hsStatus(increment)
                 return
-            # u can change it imself
             x_max, y_max, x_min, y_min = max(x_landmark_coord), max(y_landmark_coord), min(x_landmark_coord), min(
                 y_landmark_coord)  # вписываем кисть в прямоугольник
             w, h = x_max - x_min, y_max - y_min
             eps = max(w, h) * 1
             hands.close()  # чистим память
             x_max, y_max, x_min, y_min = x_max + eps, y_max + eps, x_min - eps, y_min - eps  # отступаем от краев
-
         else:
             x_max, y_max, x_min, y_min = 200, 200, 100, 100
-
         roi = img_original[y_min:y_max, x_min:x_max]  # выделяем область интереса ROI
         if roi.shape[0] < self.min_roi_height or roi.shape[1] < self.min_roi_width:
-            print("Область интереса ROI пуста")
             increment_hsStatus(increment)
             return
-        print(f'roi.shape: {roi.shape}')
         YCrCb = cv2.cvtColor(roi, cv2.COLOR_BGR2YCR_CB)  # преобразуем в пространство YCrCb
         (y, cr, cb) = cv2.split(YCrCb)  # выделяем значения Y, Cr, Cb
         cr1 = cv2.GaussianBlur(cr, (5, 5), 0)  # фильтр Гаусса для небольшого размытия
@@ -318,7 +296,6 @@ class HandSegmentor:
             folder_name_path = output_dir + '/{}'.format(image_name)
             try:
                 os.makedirs(folder_name_path)
-                print(f'folder_name_path created: {folder_name_path}')
             except OSError as e:
                 pass
             cv2.imwrite(folder_name_path + '/{}_rect_and_landmarks.jpg'.format(image_name), img)
@@ -335,7 +312,6 @@ class HandSegmentor:
                 with open(folder_name_path + '/{}'.format(image_name) + '_landmarks', "w") as file1:
                     file1.write(str(results.multi_hand_landmarks))
         increment_hsStatus(increment)
-        #print(f'--- {filename} filtration is done ---')
         return
 
 
@@ -397,8 +373,7 @@ class HandSegmentor:
                 coco = COCO(root_dir_with_dirs + filename)
                 d = coco.imgs
             if not d:
-                print("Нет json файла в папке")
-                return 0
+                return
         for filename in os.listdir(root_dir_with_dirs):
             if filename[filename.rfind(".") + 1:] in ['jpg', 'png']:
                 for value in list(d.values()):
@@ -409,7 +384,6 @@ class HandSegmentor:
                 if not flag:
                     count += 1
                     os.remove(root_dir_with_dirs + filename)
-        print("Было удалено ", count, "изображений")
 
 
 if __name__ == '__main__':

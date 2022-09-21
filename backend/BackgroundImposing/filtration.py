@@ -71,7 +71,6 @@ class Filtration:
             mask_path = f'{self.processed_path}/{dir}/{dir}_detail_bw_mask.jpg'
             flag = self.filtration(mask_path)
             if flag == 1:
-                print(f'removing: {dir}')
                 for root, dirs, files in os.walk(f'{self.processed_path}/{dir}/'):
                     for name in files:
                         os.remove(os.path.join(root, name))
@@ -79,13 +78,13 @@ class Filtration:
                         os.rmdir(os.path.join(root, name))
                 os.rmdir(f'{self.processed_path}/{dir}/')
 
-            image = cv2.imread(f'{self.processed_path}/{dir}/{dir}.jpg')
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            fm = self.variance_of_laplacian(gray)
-            if fm < self.threshold:
-                print(f'{dir}.jpg - blurry, fm = {fm}')
-            else:
-                print(f'{dir}.jpg - not blurry, fm = {fm}')
+            # image = cv2.imread(f'{self.processed_path}/{dir}/{dir}.jpg')
+            # gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            # fm = self.variance_of_laplacian(gray)
+            # if fm < self.threshold:
+            #     print(f'{dir}.jpg - blurry, fm = {fm}')
+            # else:
+            #     print(f'{dir}.jpg - not blurry, fm = {fm}')
 
 
     def empty_dir_filtration(self):

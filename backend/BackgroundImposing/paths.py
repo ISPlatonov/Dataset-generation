@@ -10,6 +10,7 @@ def get_detail_path(back_directory):
     name = back_directory + '/' + detail_folder + '/' + detail_folder
     return f'{name}_detail_on_black_bg.jpg', f'{name}_detail_bw_mask.jpg'
 
+
 def get_hand_path(back_directory):
     """
         Функция генерации имени файла с изображением руки и его маски.
@@ -19,6 +20,7 @@ def get_hand_path(back_directory):
     detail_folder = random.choice(os.listdir(back_directory))
     name = back_directory + '/' + detail_folder + '/' + detail_folder
     return f'{name}_hand_on_black_back.jpg', f'{name}_continious_hand_bw_mask.jpg'
+
 
 def preparing_dirs():
     if not os.path.exists('./generated_images_json'):

@@ -270,10 +270,7 @@ class BacksGeneration(Dict4Json):
             print(f'Time for one photo is {end_one - start_one}')
             print(f'Pixel time for one photo is {all_time}')
             yield (id + 1) / photo_num
-            # print(f'Generator yield time is {time.time() - end_one}')
-
         output.close()
-        print("Time:", time.time() - start)
 
 
 if __name__ == '__main__':

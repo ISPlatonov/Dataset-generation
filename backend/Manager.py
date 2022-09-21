@@ -1,7 +1,8 @@
-from PySide6.QtCore import Property, QCoreApplication, QObject, Qt, Signal, QStringListModel, QJsonValue, Slot
-import json, os
-from time import sleep
+import json
+import os
 from threading import Thread
+
+from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from backend.HandSegmentor import HandSegmentor
 from backend.BackgroundImposing.filtration import Filtration
@@ -9,7 +10,7 @@ from backend.BackgroundImposing.generation_backs import BacksGeneration
 
 
 class Manager(QObject):
-    #makeSnapshot = Signal()
+
     nameListChanged = Signal()
     imagesPathChanged = Signal()
     configChanged = Signal()
@@ -36,17 +37,17 @@ class Manager(QObject):
         self._photo_num = self._config['generation_backs']['photo_num']
         self._backsGenerationPercent = 0.
         self._camera_num = self._config["camera_num"]
-        self._hsStatus = 0.
-    
+        self._hsStatus = 0
 
-    def set_name_list(self, name_list):
+
+    def __set_name_list(self, name_list):
         self._name_list = name_list
         self.nameListChanged.emit()
-    
 
-    def get_name_list(self):
+
+    def __get_name_list(self):
         return self._name_list
-    
+
 
     @Slot("QVariant")
     def addName(self, name):
@@ -55,7 +56,7 @@ class Manager(QObject):
             return
         self._name_list.append(name)
         self.nameListChanged.emit()
-    
+
 
     @Slot("QVariant", "QVariant")
     def changeName(self, index, name):
@@ -64,7 +65,7 @@ class Manager(QObject):
             return
         self._name_list[index] = name
         self.nameListChanged.emit()
-    
+
 
     @Slot("QVariant")
     def removeName(self, name):
@@ -73,22 +74,22 @@ class Manager(QObject):
             return
         self._name_list.remove(name)
         self.nameListChanged.emit()
-    
 
-    def get_images_path(self):
+
+    def __get_images_path(self):
         return os.path.abspath(self._images_path)
-    
 
-    def set_images_path(self, path):
+
+    def __set_images_path(self, path):
         self._images_path = path
         self.imagesPathChanged.emit()
-    
 
-    def get_config(self):
+
+    def __get_config(self):
         return self._config
-    
 
-    def set_config(self, new_config):
+
+    def __set_config(self, new_config):
         self._config = new_config
         self.configChanged.emit()
 
@@ -98,7 +99,7 @@ class Manager(QObject):
         if dirname in os.listdir(self.get_images_path()):
             return
         os.mkdir(self.get_images_path() + '/' + dirname)
-    
+
 
     def increment_hsStatus(self, increment):
         self.hsStatus += increment
@@ -106,79 +107,100 @@ class Manager(QObject):
 
     @Slot()
     def handSegmentor(self):
-        self.set_hsStatus(0.)
-        #Thread(target=self.hs.main_job, args=(self.hsEnded,)).start()
-        Thread(target=self.hs.main_job, args=(self.hsEnded, self.increment_hsStatus), daemon=True).start()
-    
+        self.hsStatus = 0
+        Thread(target=self.hs.main_job,
+               args=(self.hsEnded, self.increment_hsStatus),
+               daemon=True).start()
+
 
     @Slot()
     def filtration(self):
         self.filter.main_job()
-    
+
 
     def backsGenerationStep(self):
         for percent in self.bg.main_job(int(self.photo_num)):
-            print(f'backsGeneration percent: {percent}')
-            self.set_backsGenerationPercent(percent)
+            self.backsGenerationPercent = percent
         self.backsGenerationEnded.emit()
 
 
     @Slot()
     def backsGeneration(self):
-        self.set_backsGenerationPercent(0.)
+        self.backsGenerationPercent = 0
         Thread(target=self.backsGenerationStep, daemon=True).start()
-    
+
 
     @Slot("QVariant")
-    def set_photo_num(self, photo_num):
+    def __set_photo_num(self, photo_num):
         self._photo_num = photo_num
         self.photoNumChanged.emit()
-    
 
-    #@Slot()
-    def get_photo_num(self):
+
+    def __get_photo_num(self):
         return self._photo_num
-    
-
-    @Slot("QVariant")
-    def sleepFor(self, secs):
-        sleep(secs)
 
 
-    def get_backsGenerationPercent(self):
+    def __get_backsGenerationPercent(self):
         return self._backsGenerationPercent
-    
+
 
     @Slot("QVariant")
-    def set_backsGenerationPercent(self, percent):
+    def __set_backsGenerationPercent(self, percent):
         self._backsGenerationPercent = percent
         self.backsGenerationPercentChanged.emit()
-    
 
-    def get_camera_num(self):
+
+    def __get_camera_num(self):
         return self._camera_num
-    
+
 
     @Slot("QVariant")
-    def set_camera_num(self, camera_num):
+    def __set_camera_num(self, camera_num):
         self._camera_num = camera_num
         self.cameraNumChanged.emit()
-    
 
-    def get_hsStatus(self):
+
+    def __get_hsStatus(self):
         return self._hsStatus
-    
+
 
     @Slot("QVariant")
-    def set_hsStatus(self, status):
+    def __set_hsStatus(self, status):
         self._hsStatus = status
         self.hsStatusChanged.emit()
-    
-    
-    name_list = Property("QVariantList", fget=get_name_list, fset=set_name_list, notify=nameListChanged)
-    images_path = Property("QVariant", fget=get_images_path, fset=set_images_path, notify=imagesPathChanged)
-    config = Property("QJsonObject", fget=get_config, fset=set_config, notify=configChanged)
-    photo_num = Property("QVariant", fget=get_photo_num, fset=set_photo_num, notify=photoNumChanged)
-    camera_num = Property("QVariant", fget=get_camera_num, fset=set_camera_num, notify=cameraNumChanged)
-    backsGenerationPercent = Property("QVariant", fget=get_backsGenerationPercent, fset=set_backsGenerationPercent, notify=backsGenerationPercentChanged)
-    hsStatus = Property("QVariant", fget=get_hsStatus, fset=set_hsStatus, notify=hsStatusChanged)
+
+
+    name_list =                 Property("QVariantList",
+                                         fget=__get_name_list,
+                                         fset=__set_name_list,
+                                         notify=nameListChanged)
+
+    images_path =               Property("QVariant",
+                                         fget=__get_images_path,
+                                         fset=__set_images_path,
+                                         notify=imagesPathChanged)
+
+    config =                    Property("QJsonObject",
+                                         fget=__get_config,
+                                         fset=__set_config,
+                                         notify=configChanged)
+
+    photo_num =                 Property("QVariant",
+                                         fget=__get_photo_num,
+                                         fset=__set_photo_num,
+                                         notify=photoNumChanged)
+
+    camera_num =                Property("QVariant",
+                                         fget=__get_camera_num,
+                                         fset=__set_camera_num,
+                                         notify=cameraNumChanged)
+
+    backsGenerationPercent =    Property("QVariant",
+                                         fget=__get_backsGenerationPercent,
+                                         fset=__set_backsGenerationPercent,
+                                         notify=backsGenerationPercentChanged)
+
+    hsStatus =                  Property("QVariant",
+                                         fget=__get_hsStatus,
+                                         fset=__set_hsStatus,
+                                         notify=hsStatusChanged)
