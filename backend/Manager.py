@@ -14,6 +14,7 @@ class Manager(QObject):
 
     nameListChanged = Signal()
     imagesPathChanged = Signal()
+    emptyTablePathChanged = Signal()
     configChanged = Signal()
     photoNumChanged = Signal()
     backsGenerationPercentChanged = Signal()
@@ -32,6 +33,7 @@ class Manager(QObject):
         self.nameListChanged.emit()
         self._images_path = self._config['images_path']
         self.imagesPathChanged.emit()
+        self.emptyTablePathChanged.emit()
         self.hs = HandSegmentor(self._config)
         self.filter = Filtration(self._config)
         self.bg = BacksGeneration(self._config)
@@ -39,6 +41,11 @@ class Manager(QObject):
         self._backsGenerationPercent = 0.
         self._camera_num = self._config["camera_num"]
         self._hsStatus = 0
+        self._empty_tables_directory = self._config['empty_tables_directory']
+        if not os.path.exists(self._images_path):
+            os.mkdir(self._images_path)
+        if not os.path.exists(self._empty_tables_directory):
+            os.mkdir(self._empty_tables_directory)
 
 
     def __set_name_list(self, name_list):
@@ -89,6 +96,15 @@ class Manager(QObject):
     def __set_images_path(self, path):
         self._images_path = path
         self.imagesPathChanged.emit()
+
+
+    def __get_empty_tables_directory(self):
+        return os.path.abspath(self._empty_tables_directory)
+
+
+    def __set_empty_tables_directory(self, path):
+        self._empty_tables_directory = path
+        self.emptyTablePathChanged.emit()
 
 
     def __get_config(self):
@@ -210,3 +226,8 @@ class Manager(QObject):
                                          fget=__get_hsStatus,
                                          fset=__set_hsStatus,
                                          notify=hsStatusChanged)
+
+    empty_tables_directory =    Property("QVariant",
+                                         fget=__get_empty_tables_directory,
+                                         fset=__set_empty_tables_directory,
+                                         notify=emptyTablePathChanged)

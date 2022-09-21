@@ -23,10 +23,14 @@ Item {
         manager.makeDir(manager.name_list[index])
         manager.makeDir(manager.name_list[index]);
         camera.start()
-        imageCapture.captureToFile(manager.images_path + "/" + manager.name_list[index] + 
-                                   "/" + manager.name_list[index] + "_" + 
-                                   /*"0".repeat(Math.floor(3 - 1 / 10)) +*/ i + ".jpg");
-        console.log("i: ", i)
+        if (i != 0) {
+            imageCapture.captureToFile(manager.images_path + "/" + manager.name_list[index] + 
+                                    "/" + manager.name_list[index] + "_" + i + ".jpg");
+        } else {
+            imageCapture.captureToFile(manager.empty_tables_directory + "/" + 
+                                   "empty_table_" + manager.name_list[index] + ".jpg");
+        }
+    
         step1camera.i++;
     }
 
@@ -38,7 +42,9 @@ Item {
             anchors.top: parent
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.margins: 50
-            text: qsTr("Сделайте фотографии детали " + manager.name_list[index])
+            text: {
+                    qsTr("Сделайте фотографии детали " + manager.name_list[index])
+                }
         }
         ProgressBar {
             anchors.horizontalCenter: parent.horizontalCenter

@@ -26,6 +26,9 @@ class HandSegmentor:
         self.need_hand = config["need_hand"]
         self.min_roi_height = config["roi"]["height"]
         self.min_roi_width = config["roi"]["width"]
+        self.max_num_hands = config["mediapipe"]["max_num_hands"]
+        self.min_detection_confidence = config['mediapipe']['min_detection_confidence']
+        self.empty_table = config["empty_table"]
         names_list = os.listdir(self.filepath)
         if 'backgrounds' in names_list:
             names_list.remove('backgrounds')
@@ -52,7 +55,10 @@ class HandSegmentor:
         photo_num = 0
         for i in range(len(self.labels) - 1):
             my_path = self.root_dir_with_dirs + self.labels[i]["name"] + "/"
-            photo_num += len(os.listdir(my_path))
+            try:
+                photo_num += len(os.listdir(my_path))
+            except:
+                pass
         increment = 1 / photo_num
         for i in range(len(self.labels) - 1):
             my_path = self.root_dir_with_dirs + self.labels[i]["name"] + "/"
@@ -184,18 +190,17 @@ class HandSegmentor:
         :param save: bool, необходимость сохранения результатов, включая промежуточные
         :return: None
         """
-        image_name = filename[:-4]
+        image_name = filename[:-4] # +
+        token_ = image_name.rfind('_')
+        empty_table_photo_name = f'{self.empty_table}_{image_name[:token_]}.jpg'
         empty_table_path = empty_table_filepath_to_folder + empty_table_photo_name
-        if empty_table_photo_name not in os.listdir(empty_table_filepath_to_folder):
-            raise Exception('Фотография пустого стола не была найдена в папке!')
         img = cv2.imread(filepath)  # считывание текущего изображения
         img_original = img.copy()
         imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # конвертируем в RGB
         x_landmark_coord, y_landmark_coord = [], []
-
         if need_hand:
             mpHands = mp.solutions.hands  # объект класса для распознавания рук на фотографии
-            hands = mpHands.Hands(max_num_hands=5, min_detection_confidence=0.3)
+            hands = mpHands.Hands(max_num_hands=self.max_num_hands, min_detection_confidence=self.min_detection_confidence)
             mpDraw = mp.solutions.drawing_utils  # рисуем метки кисти рук
             results = hands.process(imgRGB)  # process the tracking and return the results (landmarks and connections for hand)
             if results.multi_hand_landmarks:
@@ -247,11 +252,18 @@ class HandSegmentor:
         empty_table = cv2.imread(empty_table_path)  # считываем фото пустого стола
         empty_table_roi = empty_table[y_min:y_max, x_min:x_max]  # выделяем область интереса ROI
         abs_diff = cv2.absdiff(empty_table_roi, roi)  # делаем разность кадров
+        cv2.imwrite(f'./backend/qwe/{image_name}_absdiff.jpg', abs_diff)
+
         mask_gray = cv2.cvtColor(abs_diff, cv2.COLOR_BGR2GRAY)
         _, diff_thresh = cv2.threshold(mask_gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        cv2.imwrite(f'./backend/qwe/{image_name}__.jpg', abs_diff)
+
         continious_hand_bw_mask = np.where((continious_hand_bw_mask == 1), 0, 255).astype('uint8')
+        cv2.imwrite(f'./backend/qwe/{image_name}_continious_hand_bw_mask.jpg', abs_diff)
+
         mask_inv = cv2.bitwise_not(continious_hand_bw_mask)
         empty_table_fg = cv2.bitwise_and(empty_table_roi, empty_table_roi, mask=continious_hand_bw_mask)
+        print("saving")
         empty_table_bg = cv2.bitwise_and(empty_table_roi, empty_table_roi, mask=mask_inv)
         hand_fg = cv2.bitwise_and(roi, roi, mask=continious_hand_bw_mask)
         hand_bg = cv2.bitwise_and(roi, roi, mask=mask_inv)
@@ -262,6 +274,8 @@ class HandSegmentor:
         mean = ImageStat.Stat(im).mean
         _, bw_mask_thresh = cv2.threshold(dst_copy, mean[0], 255, cv2.THRESH_OTSU + cv2.THRESH_BINARY_INV)
         bw_mask = cv2.bitwise_and(dst_copy, dst_copy, mask=bw_mask_thresh)
+        # cv2.imwrite(f'./backend/qwe/{image_name}_dst.jpg', dst)
+        
         edged = bw_mask_thresh
         cnts, _ = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # ищем контуры (cv2.RETR_TREE)
         cnts = sorted(cnts, key=cv2.contourArea, reverse=False)[:10]  # сортируем контуры по площади контура
@@ -305,6 +319,7 @@ class HandSegmentor:
             cv2.imwrite(folder_name_path + '/{}_continious_hand_bw_mask.jpg'.format(image_name), continious_hand_bw_mask)
             cv2.imwrite(folder_name_path + '/{}_detail_bw_mask.jpg'.format(image_name), np.array(bw_mask_thresh))
             cv2.imwrite(folder_name_path + '/{}_detail_on_black_bg.jpg'.format(image_name), np.array(bw_mask))
+            cv2.imwrite(folder_name_path + '/{}_dst.jpg'.format(image_name), dst)
             cv2.imwrite(folder_name_path + '/{}.jpg'.format(image_name), img_original)
             with open(folder_name_path + '/{}.json'.format(image_name), "w") as write_file:  # записываем в файл
                 json.dump(d, write_file)  # переводим словарь в формат json

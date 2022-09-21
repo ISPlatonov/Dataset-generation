@@ -15,6 +15,8 @@ class Filtration:
             self.all_details_names.remove('processed')
         if '.gitignore' in self.all_details_names:
             self.all_details_names.remove('.gitignore')
+        self.min_roi_height = config["roi"]["height"]
+        self.min_roi_width = config["roi"]["width"]
 
 
     def variance_of_laplacian(self, image):
@@ -27,23 +29,28 @@ class Filtration:
         :param black_and_white_mask: маска детали
         :return: np.nan если число контуров < 3. Иначе контур - approx
         """
-        mask_gray = black_and_white_mask
-        mask_gray = cv2.bilateralFilter(mask_gray, 11, 17, 17)
-        cnts, _ = cv2.findContours(mask_gray.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # or cv2.RETR_TREE
+        if black_and_white_mask.shape[0] < self.min_roi_height or black_and_white_mask.shape[1] < self.min_roi_width:
+            return np.nan
+
+        area = black_and_white_mask.shape[0] * black_and_white_mask.shape[1]
+
+        black_and_white_mask = cv2.bilateralFilter(black_and_white_mask, 11, 17, 17)
+        cnts, _ = cv2.findContours(black_and_white_mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # or cv2.RETR_TREE
         if len(cnts) > 3 or len(cnts) == 0:
             return np.nan
+
         cnts = sorted(cnts, key = cv2.contourArea, reverse = False)[:]  # Отсортировали контуры по площади контура
                                                                         # и выбрали все.
         for c in cnts:
             peri = cv2.arcLength(c, True)  # Периметр замкнутых контуров
             approx = cv2.approxPolyDP(c, 0.005 * peri, True)  # Чем коэффициент перед peri больше, тем больше "сравнивание" границ.
                                                             # При 0.15 уже может получится квадрат из исходного множества
-                                                            # точек, аппроксимирующих шестеренку, в cnts.
-        area = black_and_white_mask.shape[0] * black_and_white_mask.shape[1]
+                                                            # точек, аппроксимирующих деталь, в cnts.
         if cv2.contourArea(approx) / area > 0.23:
             return np.nan
 
-        return approx
+        return 0
+
 
 
     def filtration(self, path_mask):
@@ -61,10 +68,9 @@ class Filtration:
             return 0
 
 
-    def countour_filtration(self, all_details_names):
+    def countour_filtration(self):
         """
         Фильтрация по количеству контуров
-        :param all_details_names: список наименований деталей
         :return:
         """
         for dir in os.listdir(self.processed_path):
@@ -77,8 +83,8 @@ class Filtration:
                     for name in dirs:
                         os.rmdir(os.path.join(root, name))
                 os.rmdir(f'{self.processed_path}/{dir}/')
-
             # image = cv2.imread(f'{self.processed_path}/{dir}/{dir}.jpg')
+            # print(f'PATH {self.processed_path}/{dir}/{dir}.jpg')
             # gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             # fm = self.variance_of_laplacian(gray)
             # if fm < self.threshold:
@@ -89,13 +95,19 @@ class Filtration:
 
     def empty_dir_filtration(self):
         for dir in os.listdir(self.processed_path):
-            if len(os.listdir(f'{self.processed_path}/{dir}/')) == 0:
-                os.rmdir(f'{self.processed_path}/{dir}/')
+            try:
+                length = len(os.listdir(f'{self.processed_path}/{dir}/'))
+                if length == 0:
+                    os.rmdir(f'{self.processed_path}/{dir}/')
+            except:
+                pass
+                # try:
+                #     os.remove(f'{self.processed_path}/{dir}')
 
 
     def main_job(self):
         self.empty_dir_filtration()
-        self.countour_filtration(self.all_details_names)
+        self.countour_filtration()
         print(f'Filtration is done!')
 
 
