@@ -191,6 +191,7 @@ class HandSegmentor:
         :return: None
         """
         image_name = filename[:-4] # +
+        print(image_name)
         token_ = image_name.rfind('_')
         empty_table_photo_name = f'{self.empty_table}_{image_name[:token_]}.jpg'
         empty_table_path = empty_table_filepath_to_folder + empty_table_photo_name
@@ -252,18 +253,14 @@ class HandSegmentor:
         empty_table = cv2.imread(empty_table_path)  # считываем фото пустого стола
         empty_table_roi = empty_table[y_min:y_max, x_min:x_max]  # выделяем область интереса ROI
         abs_diff = cv2.absdiff(empty_table_roi, roi)  # делаем разность кадров
-        cv2.imwrite(f'./backend/qwe/{image_name}_absdiff.jpg', abs_diff)
 
         mask_gray = cv2.cvtColor(abs_diff, cv2.COLOR_BGR2GRAY)
         _, diff_thresh = cv2.threshold(mask_gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        cv2.imwrite(f'./backend/qwe/{image_name}__.jpg', abs_diff)
 
         continious_hand_bw_mask = np.where((continious_hand_bw_mask == 1), 0, 255).astype('uint8')
-        cv2.imwrite(f'./backend/qwe/{image_name}_continious_hand_bw_mask.jpg', abs_diff)
 
         mask_inv = cv2.bitwise_not(continious_hand_bw_mask)
         empty_table_fg = cv2.bitwise_and(empty_table_roi, empty_table_roi, mask=continious_hand_bw_mask)
-        print("saving")
         empty_table_bg = cv2.bitwise_and(empty_table_roi, empty_table_roi, mask=mask_inv)
         hand_fg = cv2.bitwise_and(roi, roi, mask=continious_hand_bw_mask)
         hand_bg = cv2.bitwise_and(roi, roi, mask=mask_inv)
@@ -274,7 +271,6 @@ class HandSegmentor:
         mean = ImageStat.Stat(im).mean
         _, bw_mask_thresh = cv2.threshold(dst_copy, mean[0], 255, cv2.THRESH_OTSU + cv2.THRESH_BINARY_INV)
         bw_mask = cv2.bitwise_and(dst_copy, dst_copy, mask=bw_mask_thresh)
-        # cv2.imwrite(f'./backend/qwe/{image_name}_dst.jpg', dst)
         
         edged = bw_mask_thresh
         cnts, _ = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # ищем контуры (cv2.RETR_TREE)
@@ -320,6 +316,7 @@ class HandSegmentor:
             cv2.imwrite(folder_name_path + '/{}_detail_bw_mask.jpg'.format(image_name), np.array(bw_mask_thresh))
             cv2.imwrite(folder_name_path + '/{}_detail_on_black_bg.jpg'.format(image_name), np.array(bw_mask))
             cv2.imwrite(folder_name_path + '/{}_dst.jpg'.format(image_name), dst)
+            cv2.imwrite(folder_name_path + '/{}_roi.jpg'.format(image_name), roi)
             cv2.imwrite(folder_name_path + '/{}.jpg'.format(image_name), img_original)
             with open(folder_name_path + '/{}.json'.format(image_name), "w") as write_file:  # записываем в файл
                 json.dump(d, write_file)  # переводим словарь в формат json
