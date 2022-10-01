@@ -231,3 +231,4 @@ class Manager(QObject):
                                          fget=__get_empty_tables_directory,
                                          fset=__set_empty_tables_directory,
                                          notify=emptyTablePathChanged)
+

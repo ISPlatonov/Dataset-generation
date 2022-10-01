@@ -150,7 +150,6 @@ class Dict4Json:
         :param d: dictionary
         :return:  dictionary
         """
-        # print(f'names_list: {names_list}')
         is_crowd = 0
         if count > 1:
             is_crowd = 1

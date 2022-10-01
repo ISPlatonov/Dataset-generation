@@ -72,7 +72,7 @@ class BacksGeneration(Dict4Json):
         return approx
 
 
-    def generate_new_background(self, detail_num, img, mask_gray, background1, sdvig_x, sdvig_y, rect):
+    def generate_new_background(self, detail_num, detail_name, img, mask_gray, background1, sdvig_x, sdvig_y, rect):
         """
         Функция-посредник: при необходимости меняет размерность фона
         и добавляет новые элементы на фон.
@@ -86,12 +86,12 @@ class BacksGeneration(Dict4Json):
         """
         if (detail_num < 1):
             background1 = resize_specific_width_and_height(background1, self.width, self.height)
-        background1, gt, timee = self.adding_img_on_background(img, mask_gray, background1, sdvig_x, sdvig_y, rect)
+        background1, gt, timee = self.adding_img_on_background(img, mask_gray, detail_name, background1, sdvig_x, sdvig_y, rect)
         return background1, gt, timee
 
 
 
-    def adding_img_on_background(self, img, mask_gray, background, sdvig_x, sdvig_y, rect):
+    def adding_img_on_background(self, img, mask_gray, detail_name, background, sdvig_x, sdvig_y, rect):
         """
         Функция отрисовки новой детали на фоне.
         :param img: array
@@ -103,15 +103,21 @@ class BacksGeneration(Dict4Json):
         """ 
         start = time.time()
         prev_mask = np.zeros((self.height, self.width))
-        for i in range(int(rect[1]), int(rect[3])):
-            for j in range(int(rect[0]), int(rect[2])):
-                if mask_gray[i - sdvig_y][j - sdvig_x] > 250:
-                    background[i][j] = img[i - sdvig_y][j - sdvig_x]
-                    prev_mask[i][j] = mask_gray[i - sdvig_y][j - sdvig_x]
+        if detail_name == "hand":
+           for i in range(int(rect[1]), int(rect[3])):
+                for j in range(int(rect[0]), int(rect[2])):
+                    if mask_gray[i - sdvig_y][j - sdvig_x] > 250:
+                        background[i][j] = img[i - sdvig_y][j - sdvig_x]
+                        prev_mask[i][j] = mask_gray[i - sdvig_y][j - sdvig_x]
+        else:
+            for i in range(img.shape[0]):   # (int(rect[1]), int(rect[3])):
+                for j in range(img.shape[1]):  # (int(rect[0]), int(rect[2])):
+                    # if mask_gray[i - sdvig_y][j - sdvig_x] > 250:
+                    background[i + sdvig_y][j + sdvig_x] = img[i][j]  # img[i - sdvig_y][j - sdvig_x]
+                    prev_mask[i + sdvig_y][j + sdvig_x] = 255 # mask_gray[i - sdvig_y][j - sdvig_x]
         timee = time.time() - start
         print(f'Pixel time is {timee}')
         return background, prev_mask, timee
-
 
     def get_mask(self, mask_gray, sdvig_x, sdvig_y):
         """
@@ -162,7 +168,7 @@ class BacksGeneration(Dict4Json):
         return flag
 
 
-    def add_detail_on_background(self, img, mask_gray, background, sdvig_x, sdvig_y, rect):
+    def add_detail_on_background(self, img, mask_gray, detail_name, background, sdvig_x, sdvig_y, rect):
         """
         Добавление детали на фон.
         :param img: array
@@ -173,7 +179,7 @@ class BacksGeneration(Dict4Json):
         :return: array, array
         """
         cur_mask = self.get_mask(mask_gray, sdvig_x, sdvig_y)
-        background, _, timee = self.adding_img_on_background(img, mask_gray, background, sdvig_x, sdvig_y, rect)
+        background, _, timee = self.adding_img_on_background(img, mask_gray, detail_name, background, sdvig_x, sdvig_y, rect)
         return background, cur_mask, timee
 
 
@@ -200,52 +206,54 @@ class BacksGeneration(Dict4Json):
         detail = cv2.imread(path_detail)
         mask = cv2.imread(path_mask)
         mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-        detail, mask = apply_augmentations(detail, mask, vert_flip, horiz_flip, rot=rot)
-        approx = self.get_approx(mask, detail_name)
-        if approx is np.nan:
-            print("Approx is empty")
-            return img, masks_array, d, detail_num, square, timee
-        yolo_points = self.get_yolo_points(approx)
+
+        if detail_name == "hand":
+            detail, mask = apply_augmentations(detail, mask, vert_flip, horiz_flip, rot=rot)
+            
+            approx = self.get_approx(mask, detail_name)
+            if approx is np.nan:
+                print("Approx is empty")
+                return img, masks_array, d, detail_num, square, timee
+            yolo_points = self.get_yolo_points(approx)
+        else:
+            yolo_points = [0, 0, mask.shape[0], mask.shape[1]]  # self.get_yolo_points(approx)
+        
         sdvig_x, sdvig_y = self.get_shifts(img, mask)
         rect = [yolo_points[0] + sdvig_x, yolo_points[1] + sdvig_y, yolo_points[2] + sdvig_x, yolo_points[3] + sdvig_y]
         square += (yolo_points[2] - yolo_points[0]) * (yolo_points[3] - yolo_points[1])
-        if detail_num <= 0:
+        if detail_num == 0:
             d = self.writing_in_json(detail_num, img, detail_name, id, rect, count, d, self.all_details_names)
-            img, masks_array[:, :, 0], timee = self.generate_new_background(detail_num, detail, mask, background, sdvig_x, sdvig_y, rect)
+            img, masks_array[:, :, 0], timee = self.generate_new_background(detail_num, detail_name, detail, mask, background, sdvig_x, sdvig_y, rect)
         else:
             flag = self.check_iou(d, rect, detail_num)
             if flag == 1:
                 d = self.writing_in_json(detail_num, img, detail_name, id, rect, count, d, self.all_details_names)
-                img, masks_array[:, :, detail_num], timee = self.add_detail_on_background(detail, mask, img, sdvig_x, sdvig_y, rect)
+                img, masks_array[:, :, detail_num], timee = self.add_detail_on_background(detail, mask, detail_name, img, sdvig_x, sdvig_y, rect)
             else:
                 return img, masks_array, d, detail_num, square, timee
         return img, masks_array, d, detail_num + 1, square, timee
 
 
     def main_job(self, photo_num):
-        output = open(f'step 3 output.txt', 'w+')
-        name_back = self.backgrounds + '/' + str(1) + ".jpg"
-        img = cv2.imread(name_back)
         start = time.time()
+        
         max_square = self.height * self.width
         for id in range(photo_num):
             all_time = 0
             timee = 0
             start_one = time.time()
-            k = int(random.uniform(1, 63))  # номер фона
             square = 0  # square of overlayed details
-            if k > 50:
-                k = 51  # фотография пустого стола под номером 51
-            name_back = self.backgrounds + '/'+ str(k) + ".jpg"
+            name_back = self.backgrounds + '/' + random.choice(os.listdir(self.backgrounds))
+            print(f'name_back: {name_back}')
             background = resize_specific_width_and_height(cv2.imread(name_back), self.width, self.height)
+            img = background
             masks_array = np.zeros((self.height * self.width * 20)).reshape((self.height, self.width, 20))
             start_time = time.time()
             a = int(random.uniform(1, self.max_number_of_details))  # количество деталей на картинке
-            output.write(f'amount of details is {a} for img_{id}\n')
             print(f'amount of details is {a} for img_{id}\n')
             detail_num = 0
             while detail_num < a and square < max_square:
-                if detail_num <= 0:
+                if detail_num == 0:
                     d = {}
                 j = int(random.uniform(0, len(self.all_details_names)))  # номер детали из комплекта
                 detail_name = self.all_details_names[j]
@@ -253,8 +261,6 @@ class BacksGeneration(Dict4Json):
                     detail_path, mask_path = get_hand_path(self.processed_path)
                 else:
                     detail_path, mask_path = get_detail_path(self.processed_path)
-                print(f'detail: {detail_path}, mask: {mask_path}')
-                output.write(f'{detail_path}\n')
                 vf = int(random.uniform(0, 2))
                 hf = int(random.uniform(0, 2))
                 vf = int(random.uniform(0, 2))
@@ -263,14 +269,13 @@ class BacksGeneration(Dict4Json):
                                                     background, masks_array, count=a, d=d, square=square, vert_flip=vf, horiz_flip=hf, rot=rot)
                 all_time += timee
             file_name = f'img_{id}'
-            self.write_yolo_txt(d, file_name, a)
+            # self.write_yolo_txt(d, file_name, a)
             img = resize_specific_width_and_height(img, self.final_width, self.final_height)
             cv2.imwrite(f'{self.generated_images}/{file_name}.jpg', img)
             end_one = time.time()
-            print(f'Time for one photo is {end_one - start_one}')
-            print(f'Pixel time for one photo is {all_time}')
+            print(f'Time for {file_name} is {end_one - start_one}')
+            print(f'Pixel time for {file_name} is {all_time}')
             yield (id + 1) / photo_num
-        output.close()
 
 
 if __name__ == '__main__':

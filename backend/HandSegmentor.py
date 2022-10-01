@@ -8,6 +8,8 @@ import PIL
 from pycocotools.coco import COCO
 from threading import Thread, active_count
 from PySide6.QtCore import Signal
+# from backend.BackgroundImposing.dict4json import Dict4Json
+from backend.BackgroundImposing.paths import *
 
 
 class HandSegmentor:
@@ -173,6 +175,59 @@ class HandSegmentor:
         ID += 1
         return my_dict, yolo_points_detail
 
+    def get_approx(self, black_and_white_mask, detail_name):
+        """
+        Функция получение аппроксимирующего контура.
+        :param black_and_white_mask: array
+        :return: array
+        """
+        mask_gray = black_and_white_mask
+        mask_gray = cv2.bilateralFilter(mask_gray, 11, 17, 17)
+        cnts, _ = cv2.findContours(mask_gray.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # or cv2.RETR_TREE
+        if len(cnts) == 0:
+            return np.nan
+        cnts = sorted(cnts, key=cv2.contourArea, reverse=False)[:]  # Отсортировали контуры по площади контура
+                                                                        # и выбрали 10 самых больших.
+        for c in cnts:
+            peri = cv2.arcLength(c, True)  # Периметр замкнутых контуров
+            approx = cv2.approxPolyDP(c, 0.005 * peri, True)  # Чем коэффициент перед peri больше, тем больше "сравнивание" границ.
+                                                            # При 0.15 уже может получится квадрат из исходного множества
+                                                            # точек, аппроксимирующих шестеренку, в cnts.
+        return approx
+
+    def get_yolo_points(self, points):
+        """
+        Функция получения из множества точек, приближающих изображение,
+        двух, которые заключат фигуру в прямоугольник.
+        :param points: array
+        :return:
+        """
+        x, y = [], []
+        for i in range(points.shape[0]):
+            x.append((points[:][i][0])[0])  # выделили только х из переданного массива
+            y.append((points[:][i][0])[1])  # выделили только у из переданного массива
+        arr_x, arr_y = [], []
+        for i in x:
+            arr_x.append(int(i))
+        x = arr_x
+        for i in y:
+            arr_y.append(int(i))
+        y = arr_y
+        yolo_points = [int(min(x)), int(min(y)), int(max(x)), int(max(y))]
+        return yolo_points
+
+
+    def get_iou(self, boxA, boxB):
+        xA = max(boxA[0], boxB[0])
+        yA = max(boxA[1], boxB[1])
+        xB = min(boxA[2], boxB[2])
+        yB = min(boxA[3], boxB[3])
+        interArea = max(0, xB - xA + 1) * max(0, yB - yA + 1)
+        boxAArea = (boxA[2] - boxA[0] + 1) * (boxA[3] - boxA[1] + 1)
+        boxBArea = (boxB[2] - boxB[0] + 1) * (boxB[3] - boxB[1] + 1)
+        iou = interArea / float(boxAArea + boxBArea - interArea)
+        return iou
+    
 
     def mediapipe_hand_track(self, filepath, filename, output_dir, empty_table_filepath_to_folder,
                             empty_table_photo_name, increment_hsStatus, increment, eps=100, show=False, save=False, need_hand=True):
@@ -190,6 +245,7 @@ class HandSegmentor:
         :param save: bool, необходимость сохранения результатов, включая промежуточные
         :return: None
         """
+        roi_eps = 10
         image_name = filename[:-4] # +
         print(image_name)
         token_ = image_name.rfind('_')
@@ -227,7 +283,9 @@ class HandSegmentor:
             x_max, y_max, x_min, y_min = x_max + eps, y_max + eps, x_min - eps, y_min - eps  # отступаем от краев
         else:
             x_max, y_max, x_min, y_min = 200, 200, 100, 100
+
         roi = img_original[y_min:y_max, x_min:x_max]  # выделяем область интереса ROI
+
         if roi.shape[0] < self.min_roi_height or roi.shape[1] < self.min_roi_width:
             increment_hsStatus(increment)
             return
@@ -255,7 +313,7 @@ class HandSegmentor:
         abs_diff = cv2.absdiff(empty_table_roi, roi)  # делаем разность кадров
 
         mask_gray = cv2.cvtColor(abs_diff, cv2.COLOR_BGR2GRAY)
-        _, diff_thresh = cv2.threshold(mask_gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        _, __ = cv2.threshold(mask_gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
         continious_hand_bw_mask = np.where((continious_hand_bw_mask == 1), 0, 255).astype('uint8')
 
@@ -286,9 +344,49 @@ class HandSegmentor:
         else:
             increment_hsStatus(increment)
             return
+
+        approx = self.get_approx(np.array(bw_mask_thresh), image_name[:token_])
+        if approx is np.nan:
+            print("Approx is empty")
+            return
+        points_in_roi = self.get_yolo_points(approx)
+        points_in_roi = [max(0, points_in_roi[0] - roi_eps), max(0, points_in_roi[1] - roi_eps), 
+                         points_in_roi[2] + roi_eps, points_in_roi[3] + roi_eps]
+
+        x_landmark_coord, y_landmark_coord = [], []
+        roiRGB = cv2.cvtColor(roi, cv2.COLOR_BGR2RGB)
+        mpHands = mp.solutions.hands  # объект класса для распознавания рук на фотографии
+        hands = mpHands.Hands(max_num_hands=self.max_num_hands, min_detection_confidence=self.min_detection_confidence)
+        results = hands.process(roiRGB)  # process the tracking and return the results (landmarks and connections for hand)
+        if results.multi_hand_landmarks:
+            for handLms in results.multi_hand_landmarks:  # take all the landmarks for our hand(s)
+                # next cycle for getting specific landmarks (x,y) and their id (they are already sorted)
+                for id, lm in enumerate(handLms.landmark):
+                    # the landmarks are returned as the ratio of the image (decimal values - not pixels) => convert them:
+                    h, w, c = roi.shape
+                    # next coordinates of the center of all the landmarks (converted to pixels)
+                    cx, cy = int(lm.x * w), int(lm.y * h)
+                    x_landmark_coord.append(cx)
+                    y_landmark_coord.append(cy)
+            points_of_hand = [min(x_landmark_coord) - roi_eps, min(y_landmark_coord) - roi_eps,
+                            max(x_landmark_coord) + roi_eps, max(y_landmark_coord) + roi_eps]
+        else:
+            points_of_hand = points_in_roi
+        
+        hands.close()
+        # points_of_hand = [x_max, y_max, x_min, y_min]
+        
+        print(f'points_of_hand: {points_of_hand}\n points_in_roi: {points_in_roi}')
+        print("iou: ", self.get_iou(points_in_roi, points_of_hand))
+        if (self.get_iou(points_in_roi, points_of_hand) == 0):
+            return
+        x_min, y_min, x_max, y_max = points_in_roi[:]
+        roi = roi[y_min:y_max, x_min:x_max]
+        if roi.shape[0] < 30 or roi.shape[1] < 30:
+            return
         # Таким образом, получили массив  approx, приближающих границы маски
         # Далее переведем точки в словарь d и передадим словарь в json-файл "data_file.json"
-        d, yolo_points = self.json_dictionary(filename, approx, x_min, y_min, x_max, y_max)
+        # d, yolo_points = self.json_dictionary(filename, approx, x_min, y_min, x_max, y_max)
         if show:
             cv2.imshow("img", img)
             cv2.imshow("empty_table_bg", empty_table_bg)
@@ -308,21 +406,23 @@ class HandSegmentor:
                 os.makedirs(folder_name_path)
             except OSError as e:
                 pass
-            cv2.imwrite(folder_name_path + '/{}_rect_and_landmarks.jpg'.format(image_name), img)
-            cv2.imwrite(folder_name_path + '/{}_black_and_white_mask.jpg'.format(image_name), mask_black_and_white)
+
+            # cv2.imwrite(folder_name_path + '/{}_rect_and_landmarks.jpg'.format(image_name), img)
+            # cv2.imwrite(folder_name_path + '/{}_black_and_white_mask.jpg'.format(image_name), mask_black_and_white)
             cv2.imwrite(folder_name_path + '/{}_hand_on_black_back.jpg'.format(image_name), skin_color)
-            cv2.imwrite(folder_name_path + '/{}_white_countour.jpg'.format(image_name), white_countour)
+            # cv2.imwrite(folder_name_path + '/{}_white_countour.jpg'.format(image_name), white_countour)
             cv2.imwrite(folder_name_path + '/{}_continious_hand_bw_mask.jpg'.format(image_name), continious_hand_bw_mask)
             cv2.imwrite(folder_name_path + '/{}_detail_bw_mask.jpg'.format(image_name), np.array(bw_mask_thresh))
             cv2.imwrite(folder_name_path + '/{}_detail_on_black_bg.jpg'.format(image_name), np.array(bw_mask))
-            cv2.imwrite(folder_name_path + '/{}_dst.jpg'.format(image_name), dst)
+            # cv2.imwrite(folder_name_path + '/{}_dst.jpg'.format(image_name), dst)
             cv2.imwrite(folder_name_path + '/{}_roi.jpg'.format(image_name), roi)
             cv2.imwrite(folder_name_path + '/{}.jpg'.format(image_name), img_original)
-            with open(folder_name_path + '/{}.json'.format(image_name), "w") as write_file:  # записываем в файл
-                json.dump(d, write_file)  # переводим словарь в формат json
-            if need_hand:
-                with open(folder_name_path + '/{}'.format(image_name) + '_landmarks', "w") as file1:
-                    file1.write(str(results.multi_hand_landmarks))
+
+            # with open(folder_name_path + '/{}.json'.format(image_name), "w") as write_file:  # записываем в файл
+            #     json.dump(d, write_file)  # переводим словарь в формат json
+            # if need_hand:
+            #     with open(folder_name_path + '/{}'.format(image_name) + '_landmarks', "w") as file1:
+            #         file1.write(str(results.multi_hand_landmarks))
         increment_hsStatus(increment)
         return
 
@@ -403,3 +503,4 @@ if __name__ == '__main__':
         config = json.load(f)
     hs = HandSegmentor(config)
     hs.main_job()
+

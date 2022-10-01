@@ -74,15 +74,16 @@ class Filtration:
         :return:
         """
         for dir in os.listdir(self.processed_path):
-            mask_path = f'{self.processed_path}/{dir}/{dir}_detail_bw_mask.jpg'
-            flag = self.filtration(mask_path)
-            if flag == 1:
-                for root, dirs, files in os.walk(f'{self.processed_path}/{dir}/'):
-                    for name in files:
-                        os.remove(os.path.join(root, name))
-                    for name in dirs:
-                        os.rmdir(os.path.join(root, name))
-                os.rmdir(f'{self.processed_path}/{dir}/')
+            if dir != ".DS_Store":
+                mask_path = f'{self.processed_path}/{dir}/{dir}_detail_bw_mask.jpg'
+                flag = self.filtration(mask_path)
+                if flag == 1:
+                    for root, dirs, files in os.walk(f'{self.processed_path}/{dir}/'):
+                        for name in files:
+                            os.remove(os.path.join(root, name))
+                        for name in dirs:
+                            os.rmdir(os.path.join(root, name))
+                    os.rmdir(f'{self.processed_path}/{dir}/')
             # image = cv2.imread(f'{self.processed_path}/{dir}/{dir}.jpg')
             # print(f'PATH {self.processed_path}/{dir}/{dir}.jpg')
             # gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
