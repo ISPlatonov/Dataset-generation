@@ -85,7 +85,7 @@ class HandSegmentor:
                     thread.join()
                 thread_batch.clear()
         # папка со сгенерированными json файлами
-        self.unite_many_jsons(self.processed_dir, self.labels)
+        # self.unite_many_jsons(self.processed_dir, self.labels)
         #unite_many_jsons_condition(test_dir, all_imgs_in_one_dir_together, labels)
         #delete_files_without_segmentation(all_imgs_in_one_dir_together)
         signal.emit()

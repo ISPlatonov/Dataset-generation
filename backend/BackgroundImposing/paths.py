@@ -2,11 +2,11 @@ import random
 import os
 
 
-def get_detail_path(back_directory):
+def get_detail_path(detail_name, back_directory):
     """
     Функция генерации имени файла с изображением и его маски.
     """
-    detail_folder = random.choice(os.listdir(back_directory))
+    detail_folder = random.choice([x for x in os.listdir(back_directory) if x.find(detail_name) != -1])
     name = back_directory + '/' + detail_folder + '/' + detail_folder
     return f'{name}_roi.jpg', f'{name}_roi.jpg'  # f'{name}_detail_on_black_bg.jpg', f'{name}_detail_bw_mask.jpg'
 

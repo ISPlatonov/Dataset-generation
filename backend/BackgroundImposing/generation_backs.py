@@ -11,7 +11,10 @@ class BacksGeneration(Dict4Json):
     def __init__(self, config):
         super().__init__(config)
         self.processed_path = config['processed_path']
-        self.all_details_names = os.listdir(config['filepath'])
+        # self.all_details_names = os.listdir(config['filepath'])
+        self.all_details_names = config['name_list']
+        if 'Blank_surfaces' in self.all_details_names:
+            self.all_details_names.remove('Blank_surfaces')
         if 'Blank_surface' in self.all_details_names:
             self.all_details_names.remove('Blank_surface')
         if 'processed' in self.all_details_names:
@@ -249,7 +252,8 @@ class BacksGeneration(Dict4Json):
             img = background
             masks_array = np.zeros((self.height * self.width * 20)).reshape((self.height, self.width, 20))
             start_time = time.time()
-            a = int(random.uniform(1, self.max_number_of_details))  # количество деталей на картинке
+            # количество деталей на картинке
+            a = int(random.uniform(1, self.max_number_of_details))
             print(f'amount of details is {a} for img_{id}\n')
             detail_num = 0
             while detail_num < a and square < max_square:
@@ -260,7 +264,7 @@ class BacksGeneration(Dict4Json):
                 if detail_name == "hand":
                     detail_path, mask_path = get_hand_path(self.processed_path)
                 else:
-                    detail_path, mask_path = get_detail_path(self.processed_path)
+                    detail_path, mask_path = get_detail_path(detail_name, self.processed_path)
                 vf = int(random.uniform(0, 2))
                 hf = int(random.uniform(0, 2))
                 vf = int(random.uniform(0, 2))
@@ -269,8 +273,8 @@ class BacksGeneration(Dict4Json):
                                                     background, masks_array, count=a, d=d, square=square, vert_flip=vf, horiz_flip=hf, rot=rot)
                 all_time += timee
             file_name = f'img_{id}'
-            # self.write_yolo_txt(d, file_name, a)
-            img = resize_specific_width_and_height(img, self.final_width, self.final_height)
+            self.write_yolo_txt(d, file_name, a)
+            #img = resize_specific_width_and_height(img, self.final_width, self.final_height)
             cv2.imwrite(f'{self.generated_images}/{file_name}.jpg', img)
             end_one = time.time()
             print(f'Time for {file_name} is {end_one - start_one}')

@@ -7,7 +7,10 @@ class Dict4Json:
 
     def __init__(self, config):
         self.processed_path = config['processed_path']
-        self.all_details_names = os.listdir(config['filepath'])
+        # self.all_details_names = os.listdir(config['filepath'])
+        self.all_details_names = config['name_list']
+        if 'Blank_surfaces' in self.all_details_names:
+            self.all_details_names.remove('Blank_surfaces')
         if 'Blank_surface' in self.all_details_names:
             self.all_details_names.remove('Blank_surface')
         if 'processed' in self.all_details_names:
@@ -16,13 +19,15 @@ class Dict4Json:
             self.all_details_names.remove('.gitignore')
         if 'backgrounds' in self.all_details_names:
             self.all_details_names.remove('backgrounds')
+        if 'generated_images' in self.all_details_names:
+            self.all_details_names.remove('generated_images')
         if 'hand' not in self.all_details_names:
             self.all_details_names.append('hand')
         self.backgrounds = config['backgrounds']
         self.generated_images = config['generated_images']
         self.names_to_category_id_dict = dict()
         for i in range(len(self.all_details_names)):
-            self.names_to_category_id_dict[self.all_details_names[i]] = i + 1
+            self.names_to_category_id_dict[self.all_details_names[i]] = i
 
 
     def img_with_rectangle(self, img, rect):
@@ -90,6 +95,8 @@ class Dict4Json:
             arr_y.append(int(i))
         y = arr_y
         yolo_points = [float(min(x)), float(min(y)), float(max(x)), float(max(y))]
+        # 
+        
         return yolo_points
 
 
@@ -182,17 +189,26 @@ class Dict4Json:
         :return:
         """
         dir_name = 'yolo_points'
+        yolo_width = 4096.0 #TODO: ADD TO CONFIG AND CHANGE CONSTANT
+        yolo_height = 2160.0 #TODO: ADD TO CONFIG AND CHANGE CONSTANT
         try:
             os.mkdir(dir_name)
         except FileExistsError:
             pass
         f = open(f'{dir_name}/{file_name}.txt', 'w+')
         for i in range(a):
-            string = str(d["annotations"][i]["category_id"]) + ' ' + \
-                    str(d["annotations"][i]["yolo"][0]) + ' ' + \
-                    str(d["annotations"][i]["yolo"][1]) + ' ' + \
-                    str(d["annotations"][i]["yolo"][2]) + ' ' + \
-                    str(d["annotations"][i]["yolo"][3]) + '\n'
+            x_min = d["annotations"][i]["yolo"][0]
+            x_max = d["annotations"][i]["yolo"][2]
+            yolo_x = (x_max + x_min) / (yolo_width * 2)
+            yolo_w = (x_max - x_min) / (yolo_width * 2)
+
+            y_min = d["annotations"][i]["yolo"][1]
+            y_max = d["annotations"][i]["yolo"][3]
+            yolo_y = (y_max + y_min) / (yolo_height * 2)
+            yolo_h = (y_max - y_min) / (yolo_height * 2)
+            yolo_points = [yolo_x, yolo_y, yolo_w, yolo_h]
+            string = f'{d["annotations"][i]["category_id"]} {yolo_x} {yolo_y} {yolo_w} {yolo_h}\n'
             f.write(string)
             # img = img_with_rectangle(img, d["annotations"][i]["yolo"])
         f.close()
+        print(f'self.names_to_category_id_dict: {self.names_to_category_id_dict}')

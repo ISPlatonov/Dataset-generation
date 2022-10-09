@@ -18,8 +18,8 @@
     "camera_num": 0,
     "mediapipe": { "max_num_hands": 5,
                    "min_detection_confidence": 0.3},
-    "roi": { "height": 300,
-             "width": 300
+    "roi": { "height": 50,
+             "width": 50
             },
     "filtration": { "blurry_threshold": 100
     },
