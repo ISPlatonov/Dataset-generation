@@ -5,7 +5,7 @@ import numpy as np
 import json
 from PIL import ImageStat
 import PIL
-from pycocotools.coco import COCO
+# from pycocotools.coco import COCO
 from threading import Thread, active_count
 from PySide6.QtCore import Signal
 # from backend.BackgroundImposing.dict4json import Dict4Json
@@ -18,7 +18,7 @@ class HandSegmentor:
         self.filepath =  config["filepath"] # для тестирования на конкретном фото
         self.filename = config["filename"]  # для тестирования на конкретном фото
         # путь до эталонного фото пустого стола
-        self.empty_table_filepath_to_folder_ = self.filepath + 'Blank_surface/'
+        self.empty_table_filepath_to_folder_ = self.filepath + 'Blank_surfaces/'
         self.empty_table_photo_name_ = config["empty_table_photo_name_"]
         # путь для записи папок с сгенерировнными json файлами и промежуточными масками
         self.output_dir = self.filepath + 'processed/'
@@ -230,7 +230,7 @@ class HandSegmentor:
     
 
     def mediapipe_hand_track(self, filepath, filename, output_dir, empty_table_filepath_to_folder,
-                            empty_table_photo_name, increment_hsStatus, increment, eps=100, show=False, save=False, need_hand=True):
+                            empty_table_photo_name, increment_hsStatus, increment, eps=200, show=False, save=False, need_hand=True):
         """
         Функция обработки изображения для выделения детали и руки и записи в json сгенерированных координат
         :param filepath: абсолютный путь до конкретного файла, например r'/Users/alexsoldatov/Desktop/Датасет_20_деталей_
@@ -273,12 +273,13 @@ class HandSegmentor:
                     mpDraw.draw_landmarks(img, handLms, mpHands.HAND_CONNECTIONS)  # отрисовываем скелет кисти руки
             else:
                 hands.close()  # чистим память
+                print('mediapipe_error')
                 increment_hsStatus(increment)
                 return
             x_max, y_max, x_min, y_min = max(x_landmark_coord), max(y_landmark_coord), min(x_landmark_coord), min(
                 y_landmark_coord)  # вписываем кисть в прямоугольник
             w, h = x_max - x_min, y_max - y_min
-            eps = max(w, h) * 1
+            # eps = max(w, h) * 1
             hands.close()  # чистим память
             x_max, y_max, x_min, y_min = x_max + eps, y_max + eps, x_min - eps, y_min - eps  # отступаем от краев
         else:
@@ -287,6 +288,7 @@ class HandSegmentor:
         roi = img_original[y_min:y_max, x_min:x_max]  # выделяем область интереса ROI
 
         if roi.shape[0] < self.min_roi_height or roi.shape[1] < self.min_roi_width:
+            print('bad roi')
             increment_hsStatus(increment)
             return
         YCrCb = cv2.cvtColor(roi, cv2.COLOR_BGR2YCR_CB)  # преобразуем в пространство YCrCb
@@ -343,6 +345,7 @@ class HandSegmentor:
                 # точек, аппроксимирующих шестеренку, в cnts
         else:
             increment_hsStatus(increment)
+            print('len(cnts) = 0')
             return
 
         approx = self.get_approx(np.array(bw_mask_thresh), image_name[:token_])

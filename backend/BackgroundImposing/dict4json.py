@@ -76,7 +76,7 @@ class Dict4Json:
         return part_dict
 
 
-    def get_yolo_points(self, points):
+    def get_yolo_points(self, points): #########################################
         """
         Функция получения из множества точек, приближающих изображение,
         двух, которые заключат фигуру в прямоугольник.
@@ -85,8 +85,8 @@ class Dict4Json:
         """
         x, y = [], []
         for i in range(points.shape[0]):
-            x.append((points[:][i][0])[0])  # выделили только х из переданного массива
-            y.append((points[:][i][0])[1])  # выделили только у из переданного массива
+            x.append((points[:][i][0])[1])  # выделили только х из переданного массива
+            y.append((points[:][i][0])[0])  # выделили только у из переданного массива
         arr_x, arr_y = [], []
         for i in x:
             arr_x.append(int(i))
@@ -152,7 +152,7 @@ class Dict4Json:
         :param img: array
         :param detail_name: str
         :param id: int
-        :param approx: array
+        :param approx: array // [y, x, y, x]
         :param count: int
         :param d: dictionary
         :return:  dictionary
@@ -167,7 +167,7 @@ class Dict4Json:
             pass
         file_name = f'{dir_name}/img_{id}.jpg'
         category_id = self.get_category_id(detail_name)
-        yolo_points = approx
+        yolo_points = [approx[1], approx[0], approx[3], approx[2]]
         if detail_num <= 0:
             d = self.create_json_dictionary(img, file_name, yolo_points, category_id, id, is_crowd)
         else:
@@ -189,8 +189,8 @@ class Dict4Json:
         :return:
         """
         dir_name = 'yolo_points'
-        yolo_width = 4096.0 #TODO: ADD TO CONFIG AND CHANGE CONSTANT
-        yolo_height = 2160.0 #TODO: ADD TO CONFIG AND CHANGE CONSTANT
+        yolo_width = 4096.0 #4096.0 #TODO: ADD TO CONFIG AND CHANGE CONSTANT
+        yolo_height = 2160.0 # 2160.0 #TODO: ADD TO CONFIG AND CHANGE CONSTANT
         try:
             os.mkdir(dir_name)
         except FileExistsError:
@@ -200,12 +200,12 @@ class Dict4Json:
             x_min = d["annotations"][i]["yolo"][0]
             x_max = d["annotations"][i]["yolo"][2]
             yolo_x = (x_max + x_min) / (yolo_width * 2)
-            yolo_w = (x_max - x_min) / (yolo_width * 2)
+            yolo_w = (x_max - x_min) / (yolo_width)
 
             y_min = d["annotations"][i]["yolo"][1]
             y_max = d["annotations"][i]["yolo"][3]
             yolo_y = (y_max + y_min) / (yolo_height * 2)
-            yolo_h = (y_max - y_min) / (yolo_height * 2)
+            yolo_h = (y_max - y_min) / (yolo_height)
             yolo_points = [yolo_x, yolo_y, yolo_w, yolo_h]
             string = f'{d["annotations"][i]["category_id"]} {yolo_x} {yolo_y} {yolo_w} {yolo_h}\n'
             f.write(string)

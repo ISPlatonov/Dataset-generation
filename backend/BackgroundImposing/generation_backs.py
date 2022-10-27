@@ -105,10 +105,10 @@ class BacksGeneration(Dict4Json):
         :return: array, array
         """ 
         start = time.time()
-        prev_mask = np.zeros((self.height, self.width))
+        prev_mask = np.zeros((self.height, self.width))   
         if detail_name == "hand":
-           for i in range(int(rect[1]), int(rect[3])):
-                for j in range(int(rect[0]), int(rect[2])):
+           for i in range(int(rect[0]), int(rect[2])): #rect, background are y, x. So i = y, j = x
+                for j in range(int(rect[1]), int(rect[3])):
                     if mask_gray[i - sdvig_y][j - sdvig_x] > 250:
                         background[i][j] = img[i - sdvig_y][j - sdvig_x]
                         prev_mask[i][j] = mask_gray[i - sdvig_y][j - sdvig_x]
@@ -116,6 +116,7 @@ class BacksGeneration(Dict4Json):
             for i in range(img.shape[0]):   # (int(rect[1]), int(rect[3])):
                 for j in range(img.shape[1]):  # (int(rect[0]), int(rect[2])):
                     # if mask_gray[i - sdvig_y][j - sdvig_x] > 250:
+                    # background[i + sdvig_y][j + sdvig_x] = img[i][j]  # img[i - sdvig_y][j - sdvig_x]
                     background[i + sdvig_y][j + sdvig_x] = img[i][j]  # img[i - sdvig_y][j - sdvig_x]
                     prev_mask[i + sdvig_y][j + sdvig_x] = 255 # mask_gray[i - sdvig_y][j - sdvig_x]
         timee = time.time() - start
@@ -147,6 +148,8 @@ class BacksGeneration(Dict4Json):
         """
         sdvig_y = int(random.uniform(0, background.shape[0] - mask_gray.shape[0]))
         sdvig_x = int(random.uniform(0, background.shape[1] - mask_gray.shape[1]))
+        #sdvig_y = int(random.uniform(0, background.shape[1] - mask_gray.shape[1]))
+        #sdvig_x = int(random.uniform(0, background.shape[0] - mask_gray.shape[0]))
         return sdvig_x, sdvig_y
 
 
@@ -206,9 +209,9 @@ class BacksGeneration(Dict4Json):
         :return: array, array, dictionary, int
         """
         timee = 0
-        detail = cv2.imread(path_detail)
-        mask = cv2.imread(path_mask)
-        mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+        detail = cv2.imread(path_detail) # SHAPE - y, x
+        mask = cv2.imread(path_mask) 
+        mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY) # SHAPE - y, x
 
         if detail_name == "hand":
             detail, mask = apply_augmentations(detail, mask, vert_flip, horiz_flip, rot=rot)
@@ -219,10 +222,10 @@ class BacksGeneration(Dict4Json):
                 return img, masks_array, d, detail_num, square, timee
             yolo_points = self.get_yolo_points(approx)
         else:
-            yolo_points = [0, 0, mask.shape[0], mask.shape[1]]  # self.get_yolo_points(approx)
+            yolo_points = [0, 0, mask.shape[0], mask.shape[1]]  # self.get_yolo_points(approx) # SHAPE - y, x
         
         sdvig_x, sdvig_y = self.get_shifts(img, mask)
-        rect = [yolo_points[0] + sdvig_x, yolo_points[1] + sdvig_y, yolo_points[2] + sdvig_x, yolo_points[3] + sdvig_y]
+        rect = [yolo_points[0] + sdvig_y, yolo_points[1] + sdvig_x, yolo_points[2] + sdvig_y, yolo_points[3] + sdvig_x] # SHAPE - y, x
         square += (yolo_points[2] - yolo_points[0]) * (yolo_points[3] - yolo_points[1])
         if detail_num == 0:
             d = self.writing_in_json(detail_num, img, detail_name, id, rect, count, d, self.all_details_names)

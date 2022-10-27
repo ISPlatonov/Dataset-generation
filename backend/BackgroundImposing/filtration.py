@@ -29,7 +29,7 @@ class Filtration:
         :param black_and_white_mask: маска детали
         :return: np.nan если число контуров < 3. Иначе контур - approx
         """
-        if black_and_white_mask.shape[0] < self.min_roi_height or black_and_white_mask.shape[1] < self.min_roi_width:
+        if black_and_white_mask.shape[0] < self.min_roi_width or black_and_white_mask.shape[1] < self.min_roi_height:
             return np.nan
 
         area = black_and_white_mask.shape[0] * black_and_white_mask.shape[1]
@@ -46,7 +46,7 @@ class Filtration:
             approx = cv2.approxPolyDP(c, 0.005 * peri, True)  # Чем коэффициент перед peri больше, тем больше "сравнивание" границ.
                                                             # При 0.15 уже может получится квадрат из исходного множества
                                                             # точек, аппроксимирующих деталь, в cnts.
-        if cv2.contourArea(approx) / area > 0.23:
+        if cv2.contourArea(approx) / area > 0.23: ##################################################################
             return np.nan
 
         return 0

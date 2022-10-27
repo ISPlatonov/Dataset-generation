@@ -29,7 +29,7 @@
                           "final_height": 1080,
                           "final_width": 1920
                 },
-    "max_number_of_details": 20,
+    "max_number_of_details": 15,
     "graphics": {
         "window_size": {
             "height": 640,
