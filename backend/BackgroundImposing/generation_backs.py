@@ -1,3 +1,4 @@
+from typing import Generator
 import numpy as np
 import cv2
 import time
@@ -240,7 +241,7 @@ class BacksGeneration(Dict4Json):
         return img, masks_array, d, detail_num + 1, square, timee
 
 
-    def main_job(self, photo_num):
+    def main_job(self, photo_num: int) -> Generator[float, None, None]:
         '''Starts the main job of the class
         
         Args:

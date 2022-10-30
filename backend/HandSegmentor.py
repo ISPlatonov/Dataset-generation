@@ -1,3 +1,5 @@
+from pyclbr import Function
+from typing import Generator, Iterable
 import cv2
 import mediapipe as mp  # библиотека для отслеживания рук
 import os
@@ -14,7 +16,7 @@ from backend.BackgroundImposing.paths import *
 
 class HandSegmentor:
 
-    def __init__(self, config):
+    def __init__(self, config: dict):
         self.filepath =  config["filepath"] # для тестирования на конкретном фото
         self.filename = config["filename"]  # для тестирования на конкретном фото
         # путь до эталонного фото пустого стола
@@ -48,7 +50,7 @@ class HandSegmentor:
         self.labels.append({'id':str(len(names_list)), 'name': 'hand'})
 
 
-    def main_job(self, signal, increment_hsStatus):
+    def main_job(self, signal: Signal, increment_hsStatus: function) -> None:
         '''Starts the main job of the class
 
         Creates a thread for each image in the directory and starts mediapipe
@@ -99,7 +101,7 @@ class HandSegmentor:
         signal.emit()
     
 
-    def batch(self, iterable, n=1):
+    def batch(self, iterable: Iterable, n=1) -> Generator[Iterable, None, None]:
         '''Divides the iterable into batches of size n
 
         Args:

@@ -11,6 +11,21 @@ from backend.BackgroundImposing.generation_backs import BacksGeneration
 
 
 class Manager(QObject):
+    '''Class that manages the whole process of the program
+    
+    Args:
+        QObject (PySide6.QtCore.QObject): QObject
+    
+    Attributes:
+        name_list (list): list of names of people
+        images_path (str): path to directory where images are saved
+        empty_tables_directory (str): path to directory where empty tables are saved
+        config (dict): config
+        photo_num (int): number of photos to generate
+        backsGenerationPercent (float): percent of backsGeneration
+        camera_num (int): number of camera
+        hsStatus (float): status of hand segmentation
+    '''
 
     nameListChanged = Signal()
     imagesPathChanged = Signal()
@@ -53,12 +68,12 @@ class Manager(QObject):
         self.nameListChanged.emit()
 
 
-    def __get_name_list(self):
+    def __get_name_list(self) -> list:
         return self._name_list
 
 
     @Slot("QVariant")
-    def addName(self, name):
+    def addName(self, name: str):
         '''Adds name to name_list and emits nameListChanged signal
         
         Args:
@@ -72,7 +87,7 @@ class Manager(QObject):
 
 
     @Slot("QVariant", "QVariant")
-    def changeName(self, index, name):
+    def changeName(self, index: int, name: str):
         '''Changes name in name_list by index and emits nameListChanged signal
         
         Args:
@@ -87,7 +102,7 @@ class Manager(QObject):
 
 
     @Slot("QVariant")
-    def removeName(self, name):
+    def removeName(self, name: str):
         '''Removes name from name_list and emits nameListChanged signal
         
         Args:
@@ -101,20 +116,20 @@ class Manager(QObject):
 
 
     @Slot("QVariant")
-    def sleepFor(self, secs):
+    def sleepFor(self, secs: float):
         '''Sleeps for secs seconds
         
         Args:
-            secs (int): seconds to sleep
+            secs (float): seconds to sleep
         '''
         sleep(secs)
 
 
-    def __get_images_path(self):
+    def __get_images_path(self) -> str:
         return os.path.abspath(self._images_path)
 
 
-    def __set_images_path(self, path):
+    def __set_images_path(self, path: str):
         self._images_path = path
         self.imagesPathChanged.emit()
 
@@ -123,7 +138,7 @@ class Manager(QObject):
         return os.path.abspath(self._empty_tables_directory)
 
 
-    def __set_empty_tables_directory(self, path):
+    def __set_empty_tables_directory(self, path: str):
         self._empty_tables_directory = path
         self.emptyTablePathChanged.emit()
 
@@ -132,13 +147,13 @@ class Manager(QObject):
         return self._config
 
 
-    def __set_config(self, new_config):
+    def __set_config(self, new_config: dict):
         self._config = new_config
         self.configChanged.emit()
 
 
     @Slot("QVariant")
-    def makeDir(self, dirname):
+    def makeDir(self, dirname: str):
         '''Creates directory with name dirname in images_path
         
         Args:
@@ -149,11 +164,11 @@ class Manager(QObject):
         os.mkdir(self.images_path + '/' + dirname)
 
 
-    def increment_hsStatus(self, increment):
+    def increment_hsStatus(self, increment: float):
         '''Increments hsStatus by increment and emits hsStatusChanged signal
         
         Args:
-            increment (int): increment
+            increment (float): increment
         '''
         self.hsStatus += increment
 
@@ -194,7 +209,7 @@ class Manager(QObject):
 
 
     @Slot("QVariant")
-    def __set_photo_num(self, photo_num):
+    def __set_photo_num(self, photo_num: int):
         self._photo_num = photo_num
         self.photoNumChanged.emit()
 
@@ -208,7 +223,7 @@ class Manager(QObject):
 
 
     @Slot("QVariant")
-    def __set_backsGenerationPercent(self, percent):
+    def __set_backsGenerationPercent(self, percent: float):
         self._backsGenerationPercent = percent
         self.backsGenerationPercentChanged.emit()
 
@@ -218,17 +233,17 @@ class Manager(QObject):
 
 
     @Slot("QVariant")
-    def __set_camera_num(self, camera_num):
+    def __set_camera_num(self, camera_num: int):
         self._camera_num = camera_num
         self.cameraNumChanged.emit()
 
 
-    def __get_hsStatus(self):
+    def __get_hsStatus(self) -> float:
         return self._hsStatus
 
 
     @Slot("QVariant")
-    def __set_hsStatus(self, status):
+    def __set_hsStatus(self, status: float):
         self._hsStatus = status
         self.hsStatusChanged.emit()
 
