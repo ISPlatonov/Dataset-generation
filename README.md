@@ -50,9 +50,9 @@ graph TB
     main --interacts--> view
     view --uses--> Mngr
     Cam --creates--> images
-    BI --creates--> generated_images_json
+    BI --creates--> generated_images
     HS --manipulates--> images
     images --updates--> view
-    generated_images_json --updates--> view
+    generated_images --updates--> view
     view --sees--> main
 ```
