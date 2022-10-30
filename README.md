@@ -33,7 +33,7 @@ graph TB
         user[main.py] --deploys--> main[main.qml]
     end
     subgraph View
-        view[QML frontend]
+        view(QML frontend)
     end
     subgraph Model
         images[images]
@@ -42,7 +42,7 @@ graph TB
     subgraph Controller
         Mngr[Manager.py]
         Mngr --calls--> HS[HandSegmentor.py]
-        Mngr --calls--> BI[BackgroundImposing.py]
+        Mngr --calls--> BI(BackgroundImposing)
         Mngr --camera--> Cam[camera.qml]
         Mngr -.- Cfg[config.json]
     end
