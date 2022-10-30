@@ -36,8 +36,8 @@ graph TB
         view(QML frontend)
     end
     subgraph Model
-        images[images]
-        generated_images_json[generated_images_json]
+        images(images folder)
+        generated_images(generated_images folder)
     end
     subgraph Controller
         Mngr[Manager.py]
