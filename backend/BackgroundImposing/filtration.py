@@ -107,6 +107,7 @@ class Filtration:
 
 
     def main_job(self):
+        '''Starts the main job of the class'''
         self.empty_dir_filtration()
         self.countour_filtration()
         print(f'Filtration is done!')

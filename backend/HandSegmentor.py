@@ -49,6 +49,14 @@ class HandSegmentor:
 
 
     def main_job(self, signal, increment_hsStatus):
+        '''Starts the main job of the class
+
+        Creates a thread for each image in the directory and starts mediapipe
+        
+        Args:
+            signal (Signal): Signal to emit when the job is done
+            increment_hsStatus (function): Function to increment the status of the job
+        '''
         try:
             os.makedirs(self.processed_dir)
         except:
@@ -92,6 +100,15 @@ class HandSegmentor:
     
 
     def batch(self, iterable, n=1):
+        '''Divides the iterable into batches of size n
+
+        Args:
+            iterable (iterable): Iterable to divide
+            n (int, optional): Size of the batches. Defaults to 1.
+        
+        Yields:
+            iterable: Batch of size n
+        '''
         l = len(iterable)
         for ndx in range(0, l, n):
             yield iterable[ndx:min(ndx + n, l)]

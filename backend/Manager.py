@@ -59,6 +59,11 @@ class Manager(QObject):
 
     @Slot("QVariant")
     def addName(self, name):
+        '''Adds name to name_list and emits nameListChanged signal
+        
+        Args:
+            name (str): name to add
+        '''
         if name in self._name_list:
             self.nameListChanged.emit()
             return
@@ -68,6 +73,12 @@ class Manager(QObject):
 
     @Slot("QVariant", "QVariant")
     def changeName(self, index, name):
+        '''Changes name in name_list by index and emits nameListChanged signal
+        
+        Args:
+            index (int): index of name in name_list
+            name (str): new name
+        '''
         if name in self._name_list:
             self.nameListChanged.emit()
             return
@@ -77,6 +88,11 @@ class Manager(QObject):
 
     @Slot("QVariant")
     def removeName(self, name):
+        '''Removes name from name_list and emits nameListChanged signal
+        
+        Args:
+            name (str): name to remove
+        '''
         if name not in self._name_list:
             self.nameListChanged.emit()
             return
@@ -86,6 +102,11 @@ class Manager(QObject):
 
     @Slot("QVariant")
     def sleepFor(self, secs):
+        '''Sleeps for secs seconds
+        
+        Args:
+            secs (int): seconds to sleep
+        '''
         sleep(secs)
 
 
@@ -118,17 +139,31 @@ class Manager(QObject):
 
     @Slot("QVariant")
     def makeDir(self, dirname):
+        '''Creates directory with name dirname in images_path
+        
+        Args:
+            dirname (str): name of directory to create
+        '''
         if dirname in os.listdir(self.images_path):
             return
         os.mkdir(self.images_path + '/' + dirname)
 
 
     def increment_hsStatus(self, increment):
+        '''Increments hsStatus by increment and emits hsStatusChanged signal
+        
+        Args:
+            increment (int): increment
+        '''
         self.hsStatus += increment
 
 
     @Slot()
     def handSegmentor(self):
+        '''Call hand segmentor
+        
+        Creates a demon thread for hand segmentor and starts it
+        '''
         self.hsStatus = 0
         Thread(target=self.hs.main_job,
                args=(self.hsEnded, self.increment_hsStatus),
@@ -137,10 +172,12 @@ class Manager(QObject):
 
     @Slot()
     def filtration(self):
+        '''Call filtration'''
         self.filter.main_job()
 
 
     def backsGenerationStep(self):
+        '''Emits backsGenerationPercentChanged signal'''
         for percent in self.bg.main_job(int(self.photo_num)):
             self.backsGenerationPercent = percent
         self.backsGenerationEnded.emit()
@@ -148,6 +185,10 @@ class Manager(QObject):
 
     @Slot()
     def backsGeneration(self):
+        '''Call backs generation
+
+        Creates a demon thread for backs generation and starts it
+        '''
         self.backsGenerationPercent = 0
         Thread(target=self.backsGenerationStep, daemon=True).start()
 

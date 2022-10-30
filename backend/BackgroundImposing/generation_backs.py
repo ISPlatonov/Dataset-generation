@@ -241,6 +241,14 @@ class BacksGeneration(Dict4Json):
 
 
     def main_job(self, photo_num):
+        '''Starts the main job of the class
+        
+        Args:
+            photo_num (int): number of photos to generate
+        
+        Yields:
+            float: percentage of the job done
+        '''
         start = time.time()
         
         max_square = self.height * self.width
