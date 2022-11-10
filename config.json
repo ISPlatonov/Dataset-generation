@@ -24,6 +24,8 @@
     "filtration": { "blurry_threshold": 100
     },
     "generation_backs": { "photo_num": 20,
+                          "iou": 0.2,
+                          "max_details_on_photo": 5,
                           "height": 2160,
                           "width": 4096,
                           "final_height": 1080,

@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import QtQuick.Dialogs
 import Qt.labs.platform
 import QtQml
-
+// import QtQuick.Controls.Styles 1.4
 
 Item {
     id: step3backs
@@ -16,6 +16,7 @@ Item {
     Button {
         id: button1
         text: qsTr("Выбрать папку с фонами")
+
         width: (parent.width / 2)
         anchors.centerIn: parent
         height: manager.config.graphics.unit_height

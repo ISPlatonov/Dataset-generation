@@ -40,7 +40,7 @@ Item {
     }
     Button {
         id: button3
-        text: qsTr("Вперед")
+        text: qsTr("Запустить")
         width: (parent.width / 6)
         anchors.margins: 20
         anchors.right: parent.right

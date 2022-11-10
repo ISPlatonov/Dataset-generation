@@ -50,7 +50,7 @@ class HandSegmentor:
         self.labels.append({'id':str(len(names_list)), 'name': 'hand'})
 
 
-    def main_job(self, signal: Signal, increment_hsStatus: function) -> None:
+    def main_job(self, signal: Signal, increment_hsStatus) -> None:
         '''Starts the main job of the class
 
         Creates a thread for each image in the directory and starts mediapipe

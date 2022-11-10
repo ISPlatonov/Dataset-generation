@@ -7,18 +7,20 @@ import QtQuick.Layouts
 import QtMultimedia
 
 import "."
-
+// import "textfielddoublevalidator.h"
 
 ApplicationWindow {
     MediaDevices {
         id: devices
     }
     id: mainrect
-    //color: Constants.backgroundColor
+    // color: Constants.backgroundColor
     width: manager.config["graphics"]["window_size"]["width"]
     height: manager.config["graphics"]["window_size"]["height"]
     visible: true
     title: qsTr("Dataset generator")
+    minimumWidth: 450
+    minimumHeight: 350
 
     // temp array for 1st step
     property var name_list: manager.name_list

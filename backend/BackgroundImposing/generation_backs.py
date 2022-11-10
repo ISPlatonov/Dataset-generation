@@ -37,6 +37,7 @@ class BacksGeneration(Dict4Json):
         self.final_height = config['generation_backs']['final_height']
         self.final_width = config['generation_backs']['final_width']
         self.max_number_of_details = config['max_number_of_details']
+        # self.iou = 
 
 
     def get_score(self, boxA, boxB):
@@ -165,11 +166,11 @@ class BacksGeneration(Dict4Json):
         flag = 1
         for i in range(detail_num):
             score = self.get_score(d["annotations"][i]["yolo"], rect1)
-            if score > 0.2:
+            if score > self.iou:
                 flag = 0
                 break
             score = self.get_score(rect1, d["annotations"][i]["yolo"])
-            if score > 0.2:
+            if score > self.iou:
                 flag = 0
                 break
         return flag
@@ -241,7 +242,7 @@ class BacksGeneration(Dict4Json):
         return img, masks_array, d, detail_num + 1, square, timee
 
 
-    def main_job(self, photo_num: int) -> Generator[float, None, None]:
+    def main_job(self, photo_num: int, hand_indicator: bool, rectangle_indicator: bool) -> Generator[float, None, None]:
         '''Starts the main job of the class
         
         Args:
@@ -251,6 +252,7 @@ class BacksGeneration(Dict4Json):
             float: percentage of the job done
         '''
         start = time.time()
+        print(f'You choose hand({hand_indicator}) and rectangle({rectangle_indicator})\n')
         
         max_square = self.height * self.width
         for id in range(photo_num):

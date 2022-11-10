@@ -22,6 +22,7 @@ class Manager(QObject):
         empty_tables_directory (str): path to directory where empty tables are saved
         config (dict): config
         photo_num (int): number of photos to generate
+        iou (double): the value of IoU for generation photos
         backsGenerationPercent (float): percent of backsGeneration
         camera_num (int): number of camera
         hsStatus (float): status of hand segmentation
@@ -37,13 +38,16 @@ class Manager(QObject):
     hsEnded = Signal()
     hsStatusChanged = Signal()
     backsGenerationEnded = Signal()
+    iouChanged = Signal()
+    maxNumberChanged = Signal()
+    handIndicatorChanged = Signal()
+    rectangleIndicatorChanged = Signal()
 
 
     def __init__(self):
         super(Manager, self).__init__()
         with open('config.json', 'r') as f:
             self._config = json.load(f)
-        # for testing only!
         self._name_list = self._config['name_list']
         self.nameListChanged.emit()
         self._images_path = self._config['images_path']
@@ -53,6 +57,10 @@ class Manager(QObject):
         self.filter = Filtration(self._config)
         self.bg = BacksGeneration(self._config)
         self._photo_num = self._config['generation_backs']['photo_num']
+        self._iou = self._config['generation_backs']['iou']
+        self._hand_indicator = 1  # True
+        self._rectangle_indicator = 1  # True
+        self._max_details_on_photo = self._config['generation_backs']['max_details_on_photo']
         self._backsGenerationPercent = 0.
         self._camera_num = self._config["camera_num"]
         self._hsStatus = 0
@@ -193,7 +201,7 @@ class Manager(QObject):
 
     def backsGenerationStep(self):
         '''Emits backsGenerationPercentChanged signal'''
-        for percent in self.bg.main_job(int(self.photo_num)):
+        for percent in self.bg.main_job(int(self.photo_num), bool(self.hand_indicator), bool(self.rectangle_indicator)):
             self.backsGenerationPercent = percent
         self.backsGenerationEnded.emit()
 
@@ -216,6 +224,46 @@ class Manager(QObject):
 
     def __get_photo_num(self):
         return self._photo_num
+
+
+    @Slot("QVariant")
+    def __set_iou(self, iou):
+        self._iou = float(iou)
+        self.iouChanged.emit()
+
+
+    def __get_iou(self):
+        return self._iou
+
+
+    @Slot("QVariant")
+    def __set_hand_indicator(self, hand_indicator: int):
+        self._hand_indicator = hand_indicator
+        self.handIndicatorChanged.emit()
+
+
+    def __get_hand_indicator(self):
+        return self._hand_indicator
+
+
+    @Slot("QVariant")
+    def __set_rectangle_indicator(self, rectangle_indicator: int):
+        self._rectangle_indicator = rectangle_indicator
+        self.rectangleIndicatorChanged.emit()
+
+
+    def __get_rectangle_indicator(self):
+        return self._rectangle_indicator
+
+    
+    @Slot("QVariant")
+    def __set_max_details_on_photo(self, max_details_on_photo):
+        self._max_details_on_photo = float(max_details_on_photo)
+        self.max_details_on_photoChanged.emit()
+
+
+    def __get_max_details_on_photo(self):
+        return self._max_details_on_photo
 
 
     def __get_backsGenerationPercent(self):
@@ -267,6 +315,31 @@ class Manager(QObject):
                                          fget=__get_photo_num,
                                          fset=__set_photo_num,
                                          notify=photoNumChanged)
+
+
+    iou =                       Property("QVariant",
+                                         fget=__get_iou,
+                                         fset=__set_iou,
+                                         notify=iouChanged)
+
+
+    hand_indicator =            Property("QVariant",
+                                         fget=__get_hand_indicator,
+                                         fset=__set_hand_indicator,
+                                         notify=handIndicatorChanged)
+
+
+    rectangle_indicator =       Property("QVariant",
+                                         fget=__get_rectangle_indicator,
+                                         fset=__set_rectangle_indicator,
+                                         notify=rectangleIndicatorChanged)
+                                         
+                                       
+    max_details_on_photo =      Property("QVariant",
+                                         fget=__get_max_details_on_photo,
+                                         fset=__set_max_details_on_photo,
+                                         notify=maxNumberChanged)
+                                    
 
     camera_num =                Property("QVariant",
                                          fget=__get_camera_num,

@@ -16,6 +16,7 @@ Item {
         id: button1
         text: qsTr("Выбрать папку с масками деталей")
         width: (parent.width / 2)
+        // minimumWidth: 300
         anchors.centerIn: parent
         height: manager.config.graphics.unit_height
         onClicked: {
