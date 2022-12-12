@@ -54,6 +54,9 @@ ApplicationWindow {
         function onGotoChoosingDir() {
             mainLoader.source = "step 1/dir.qml"
         }
+        function onGotoParametres() {
+            mainLoader.source = "step 1/parametres.qml"
+        }
         function onGotoCamera() {
             mainLoader.source = "step 1/camera.qml"
         }
@@ -65,9 +68,6 @@ ApplicationWindow {
         function onGotoThreshold() {
             manager.hsStatus = 0
             mainLoader.source = "step 2/threshold.qml"
-        }
-        function onGotoBacks() {
-            mainLoader.source = "step 3/backs.qml"
         }
         function onGotoGeneration() {
             mainLoader.source = "step 3/generation.qml"

@@ -11,7 +11,7 @@ class BacksGeneration(Dict4Json):
 
     def __init__(self, config):
         super().__init__(config)
-        self.processed_path = config['processed_path']
+        self.processed_path = config['preprocessing']['processed_folder']
         # self.all_details_names = os.listdir(config['filepath'])
         self.all_details_names = config['name_list']
         if 'Blank_surfaces' in self.all_details_names:
@@ -36,15 +36,20 @@ class BacksGeneration(Dict4Json):
         self.width = config['generation_backs']['width']
         self.final_height = config['generation_backs']['final_height']
         self.final_width = config['generation_backs']['final_width']
-        self.max_number_of_details = config['max_number_of_details']
-        # self.iou = 
+        self.iou = config['generation_backs']['iou']
+        # self.max_number_of_details = config['max_number_of_details']
 
 
     def get_score(self, boxA, boxB):
-        xA = max(boxA[0], boxB[0])
-        yA = max(boxA[1], boxB[1])
-        xB = min(boxA[2], boxB[2])
-        yB = min(boxA[3], boxB[3])
+        xA = max(boxA[1], boxB[1])
+        yA = max(boxA[0], boxB[0])
+        xB = min(boxA[3], boxB[3])
+        yB = min(boxA[2], boxB[2])
+
+        # xA = max(boxA[0], boxB[0])
+        # yA = max(boxA[1], boxB[1])
+        # xB = min(boxA[2], boxB[2])
+        # yB = min(boxA[3], boxB[3])
         interArea = max(0, xB - xA + 1) * max(0, yB - yA + 1)
         boxAArea = (boxA[2] - boxA[0] + 1) * (boxA[3] - boxA[1] + 1)
         boxBArea = (boxB[2] - boxB[0] + 1) * (boxB[3] - boxB[1] + 1)
@@ -91,8 +96,8 @@ class BacksGeneration(Dict4Json):
         """
         if (detail_num < 1):
             background1 = resize_specific_width_and_height(background1, self.width, self.height)
-        background1, gt, timee = self.adding_img_on_background(img, mask_gray, detail_name, background1, sdvig_x, sdvig_y, rect)
-        return background1, gt, timee
+        background1, gt = self.adding_img_on_background(img, mask_gray, detail_name, background1, sdvig_x, sdvig_y, rect)
+        return background1, gt
 
 
 
@@ -106,7 +111,6 @@ class BacksGeneration(Dict4Json):
         :param sdvig_y: int
         :return: array, array
         """ 
-        start = time.time()
         prev_mask = np.zeros((self.height, self.width))   
         if detail_name == "hand":
            for i in range(int(rect[0]), int(rect[2])): #rect, background are y, x. So i = y, j = x
@@ -121,9 +125,7 @@ class BacksGeneration(Dict4Json):
                     # background[i + sdvig_y][j + sdvig_x] = img[i][j]  # img[i - sdvig_y][j - sdvig_x]
                     background[i + sdvig_y][j + sdvig_x] = img[i][j]  # img[i - sdvig_y][j - sdvig_x]
                     prev_mask[i + sdvig_y][j + sdvig_x] = 255 # mask_gray[i - sdvig_y][j - sdvig_x]
-        timee = time.time() - start
-        print(f'Pixel time is {timee}')
-        return background, prev_mask, timee
+        return background, prev_mask
 
     def get_mask(self, mask_gray, sdvig_x, sdvig_y):
         """
@@ -187,8 +189,8 @@ class BacksGeneration(Dict4Json):
         :return: array, array
         """
         cur_mask = self.get_mask(mask_gray, sdvig_x, sdvig_y)
-        background, _, timee = self.adding_img_on_background(img, mask_gray, detail_name, background, sdvig_x, sdvig_y, rect)
-        return background, cur_mask, timee
+        background, _ = self.adding_img_on_background(img, mask_gray, detail_name, background, sdvig_x, sdvig_y, rect)
+        return background, cur_mask
 
 
     def generate_new_photo(self, detail_num, id, detail_name, img, path_detail, path_mask, background, masks_array,
@@ -210,7 +212,6 @@ class BacksGeneration(Dict4Json):
         :param rot: int
         :return: array, array, dictionary, int
         """
-        timee = 0
         detail = cv2.imread(path_detail) # SHAPE - y, x
         mask = cv2.imread(path_mask) 
         mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY) # SHAPE - y, x
@@ -221,7 +222,7 @@ class BacksGeneration(Dict4Json):
             approx = self.get_approx(mask, detail_name)
             if approx is np.nan:
                 print("Approx is empty")
-                return img, masks_array, d, detail_num, square, timee
+                return img, masks_array, d, detail_num, square
             yolo_points = self.get_yolo_points(approx)
         else:
             yolo_points = [0, 0, mask.shape[0], mask.shape[1]]  # self.get_yolo_points(approx) # SHAPE - y, x
@@ -231,18 +232,18 @@ class BacksGeneration(Dict4Json):
         square += (yolo_points[2] - yolo_points[0]) * (yolo_points[3] - yolo_points[1])
         if detail_num == 0:
             d = self.writing_in_json(detail_num, img, detail_name, id, rect, count, d, self.all_details_names)
-            img, masks_array[:, :, 0], timee = self.generate_new_background(detail_num, detail_name, detail, mask, background, sdvig_x, sdvig_y, rect)
+            img, masks_array[:, :, 0] = self.generate_new_background(detail_num, detail_name, detail, mask, background, sdvig_x, sdvig_y, rect)
         else:
             flag = self.check_iou(d, rect, detail_num)
             if flag == 1:
                 d = self.writing_in_json(detail_num, img, detail_name, id, rect, count, d, self.all_details_names)
-                img, masks_array[:, :, detail_num], timee = self.add_detail_on_background(detail, mask, detail_name, img, sdvig_x, sdvig_y, rect)
+                img, masks_array[:, :, detail_num] = self.add_detail_on_background(detail, mask, detail_name, img, sdvig_x, sdvig_y, rect)
             else:
-                return img, masks_array, d, detail_num, square, timee
-        return img, masks_array, d, detail_num + 1, square, timee
+                return img, masks_array, d, detail_num, square
+        return img, masks_array, d, detail_num + 1, square
 
 
-    def main_job(self, photo_num: int, hand_indicator: bool, rectangle_indicator: bool) -> Generator[float, None, None]:
+    def main_job(self, photo_num: int, max_number_of_details: int, iou: float, hand_indicator: bool, rectangle_indicator: bool) -> Generator[float, None, None]:
         '''Starts the main job of the class
         
         Args:
@@ -251,31 +252,25 @@ class BacksGeneration(Dict4Json):
         Yields:
             float: percentage of the job done
         '''
-        start = time.time()
         print(f'You choose hand({hand_indicator}) and rectangle({rectangle_indicator})\n')
-        
+        self.iou = iou
+        print("iou is", self.iou)
         max_square = self.height * self.width
         for id in range(photo_num):
-            all_time = 0
-            timee = 0
-            start_one = time.time()
             square = 0  # square of overlayed details
             name_back = self.backgrounds + '/' + random.choice(os.listdir(self.backgrounds))
-            print(f'name_back: {name_back}')
             background = resize_specific_width_and_height(cv2.imread(name_back), self.width, self.height)
             img = background
             masks_array = np.zeros((self.height * self.width * 20)).reshape((self.height, self.width, 20))
-            start_time = time.time()
-            # количество деталей на картинке
-            a = int(random.uniform(1, self.max_number_of_details))
-            print(f'amount of details is {a} for img_{id}\n')
+            number_of_details = int(random.uniform(1, max_number_of_details))
+            print(f'amount of details is {number_of_details} for img_{id}')
             detail_num = 0
-            while detail_num < a and square < max_square:
+            while detail_num < number_of_details and square < max_square:
                 if detail_num == 0:
                     d = {}
                 j = int(random.uniform(0, len(self.all_details_names)))  # номер детали из комплекта
                 detail_name = self.all_details_names[j]
-                if detail_name == "hand":
+                if hand_indicator == True and detail_name == "hand":
                     detail_path, mask_path = get_hand_path(self.processed_path)
                 else:
                     detail_path, mask_path = get_detail_path(detail_name, self.processed_path)
@@ -283,16 +278,12 @@ class BacksGeneration(Dict4Json):
                 hf = int(random.uniform(0, 2))
                 vf = int(random.uniform(0, 2))
                 rot = int(random.uniform(0, 360))
-                img, masks_array, d, detail_num, square, timee = self.generate_new_photo(detail_num, id, detail_name, img, detail_path, mask_path,
-                                                    background, masks_array, count=a, d=d, square=square, vert_flip=vf, horiz_flip=hf, rot=rot)
-                all_time += timee
+                img, masks_array, d, detail_num, square = self.generate_new_photo(detail_num, id, detail_name, img, detail_path, mask_path,
+                                                    background, masks_array, count=number_of_details, d=d, square=square, vert_flip=vf, horiz_flip=hf, rot=rot)
             file_name = f'img_{id}'
-            self.write_yolo_txt(d, file_name, a)
+            self.write_yolo_txt(d, file_name, number_of_details)
             #img = resize_specific_width_and_height(img, self.final_width, self.final_height)
             cv2.imwrite(f'{self.generated_images}/{file_name}.jpg', img)
-            end_one = time.time()
-            print(f'Time for {file_name} is {end_one - start_one}')
-            print(f'Pixel time for {file_name} is {all_time}')
             yield (id + 1) / photo_num
 
 

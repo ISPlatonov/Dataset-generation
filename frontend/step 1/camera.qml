@@ -10,8 +10,7 @@ import QtQml
 Item {
     id: step1camera
 
-    signal gotoStep1()
-    signal gotoChoosingDir()
+    signal gotoParametres()
     signal gotoStep2()
 
     property int index: 0  // индекс текущей детали
@@ -23,13 +22,8 @@ Item {
         manager.makeDir(manager.name_list[index])
         manager.makeDir(manager.name_list[index]);
         camera.start()
-        if (i != 0) {
-            imageCapture.captureToFile(manager.images_path + "/" + manager.name_list[index] + 
+        imageCapture.captureToFile(manager.images_path + "/" + manager.name_list[index] + 
                                     "/" + manager.name_list[index] + "_" + i + ".jpg");
-        } else {
-            imageCapture.captureToFile(manager.empty_tables_directory + "/" + 
-                                   "empty_table_" + manager.name_list[index] + ".jpg");
-        }
     
         step1camera.i++;
     }
@@ -123,7 +117,6 @@ Item {
         }
     }
 
-
     Button {
         id: button2
         text: qsTr("Назад")
@@ -131,7 +124,7 @@ Item {
         anchors.margins: 20
         anchors.left: parent.left
         anchors.bottom: parent.bottom
-        onClicked: step1camera.gotoStep1()
+        onClicked: step1camera.gotoParametres()
     }
 
     MediaDevices {

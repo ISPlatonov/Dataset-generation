@@ -17,7 +17,7 @@ Item {
 
     signal gotoMainView()
     signal gotoChoosingDir()
-    signal gotoCamera()
+    signal gotoParametres()
 
     property int focusedItemIndex
     
@@ -136,7 +136,7 @@ Item {
 
         Button {
             id: button3
-            text: qsTr("Готово")
+            text: qsTr("Далее")
             width: (parent.width / 6)
             anchors.margins: 20
             anchors.right: parent.right
@@ -145,7 +145,7 @@ Item {
                 console.log("manager.name_list.length: " + manager.name_list.length)
                 if (manager.name_list.length > 1) {
                     //manager.addName("Blank_surface");
-                    step1list.gotoCamera()
+                    step1list.gotoParametres()
                 } else {
                     messagedialog.visible = true
                 }

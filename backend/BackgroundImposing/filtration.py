@@ -6,7 +6,7 @@ import json
 class Filtration:
 
     def __init__(self, config):
-        self.processed_path = config['processed_path']
+        self.processed_path = config['preprocessing']['processed_folder']
         self.all_details_names = os.listdir(config['filepath'])
         self.threshold = config['filtration']['blurry_threshold']
         if 'Blank_surface' in self.all_details_names:

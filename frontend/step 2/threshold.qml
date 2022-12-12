@@ -15,40 +15,23 @@ Item {
     signal gotoStep2()
     signal gotoStep3()
     signal hsEnded()
-    //signal handSegmentor()
-    /*Image {
-        id: photoPreview
-        width: parent.width
-        height: parent.height
-        anchors.margins: 100
-        source: "images/biba/biba_000.jpg" // manager.images_path + "/" + manager.name_list[0] + "/" + manager.name_list[0] + "_000.jpg"
-    }*/
     Column {
         anchors.centerIn: parent
         spacing: 2
         Text {
-            text: qsTr("Фильтрация деталей...")
+            text: qsTr("Генерация масок")
         }
-        ProgressBar {
-            value: manager.hsStatus
+        Button {
+            text: qsTr("Запустить")
+            onClicked: {
+                manager.handSegmentor()
+            }
         }
+        // ProgressBar {
+        //     value: manager.hsStatus
+        // }
     }
-    Button {
-        id: button1
-        text: qsTr("Подтвердить")
-        width: (parent.width / 6)
-        anchors.margins: 20
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        onClicked: {
-            manager.handSegmentor()
-            //console.log("path to image: " + manager.images_path + "/" + manager.name_list[0] + "/" + manager.name_list[0] + "_000.jpg")
-            //gotoStep3()
-            button1.enabled = false
-            button2.enabled = false
-            slider.enabled = false
-        }
-    }
+    
     Button {
         id: button2
         text: qsTr("Назад")
@@ -58,21 +41,23 @@ Item {
         anchors.bottom: parent.bottom
         onClicked: step2threshold.gotoStep2()
     }
-    Slider {
-        id: slider
+     Button {
+        text: qsTr("На следующий этап")
+        width: (parent.width / 6)
+        anchors.margins: 20
+        anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter: button2.verticalCenter
+        onClicked: step2threshold.gotoStep3()
     }
     Loader {
         id: thresholdloader
         anchors.fill: parent
     }
-    Connections {
-        target: manager
+    // Connections {  // why?
+    //     target: manager
  
-        onHsEnded: {
-            gotoStep3()
-        }
-    }
+    //     onHsEnded: {
+    //         gotoStep3()
+    //     }
+    // }
 }

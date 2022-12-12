@@ -10,17 +10,95 @@ import QtQml
 Item {
     id: step3dir
     signal gotoMainView()
-    signal gotoBacks()
+    signal gotoPhotoNum()
     focus: true
-    Button {
-        id: button1
-        text: qsTr("Выбрать папку с масками деталей")
-        width: (parent.width / 2)
-        // minimumWidth: 300
+    GridLayout {
+        id: layout
         anchors.centerIn: parent
-        height: manager.config.graphics.unit_height
-        onClicked: {
-            fileDialog.open()
+        rows: 5
+        columns: 3
+        Rectangle {
+            color: 'transparent'
+            Layout.fillWidth: true
+            Layout.preferredHeight: 20
+            Layout.columnSpan: 3
+            Text {
+                anchors.centerIn: parent
+                text: "Подтвердите выбор папок для генерации"
+            }
+        }
+        Rectangle {
+            color: 'transparent'
+            Layout.fillWidth: true
+            Layout.preferredHeight: 20
+            Layout.columnSpan: 3
+            Text {
+                anchors.centerIn: parent
+                text: "Папка с масками деталей"
+            }
+        }
+        TextField {
+            Layout.columnSpan: 2
+            Layout.minimumWidth: 270
+            // Layout.maximumWidth: 670
+            text: manager.proccessed_path
+        }
+        Button {
+            text: "Изменить"
+            height: manager.config.graphics.unit_height
+            onClicked: {
+                fileDialog.open()
+            }
+        }
+        Rectangle {
+            color: 'transparent'
+            Layout.fillWidth: true
+            Layout.preferredHeight: 20
+            Layout.columnSpan: 3
+            Text {
+                anchors.centerIn: parent
+                text: "Папка с фонами"
+            }
+        }
+        TextField {
+            id: text_field2
+            Layout.columnSpan: 2
+            Layout.minimumWidth: 270
+            text: manager.backgrounds_path
+        }
+        Button {
+            text: qsTr("Изменить")
+            height: manager.config.graphics.unit_height
+            // anchors.verticalCenter: text_field2.verticalCenter
+            // Layout.alignment: Qt.AlignVCenter
+            onClicked: {
+                fileDialog.open()
+            }
+        }
+        Rectangle {
+            color: 'transparent'
+            Layout.fillWidth: true
+            Layout.preferredHeight: 20
+            Layout.columnSpan: 3
+            Text {
+                anchors.centerIn: parent
+                text: "Папка для новых сгенерированных фотографий"
+            }
+        }
+        TextField {
+            id: text_field3
+            Layout.columnSpan: 2
+            Layout.minimumWidth: 270
+            text: manager.generated_path
+        }
+        Button {
+            Layout.fillHeight: true
+
+            text: qsTr("Изменить")
+            height: manager.config.graphics.unit_height
+            onClicked: {
+                fileDialog.open()
+            }
         }
     }
     Button {
@@ -39,12 +117,15 @@ Item {
         anchors.margins: 20
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        onClicked: step3dir.gotoBacks()
+        onClicked: step3dir.gotoPhotoNum()
     }
     FolderDialog {
         id: fileDialog
-        //nameFilters: ["*/"]
-        //selectFolder: true
+        onAccepted: {
+            console.log("dir: " + fileDialog.fileUrls);
+        }
+        // nameFilters: ["*/"]
+        // selectFolder: true
     }
     Loader {
         id: dirloader
@@ -54,6 +135,6 @@ Item {
         step3dir.gotoMainView()
     }
     Keys.onEnterPressed: {
-        step3dir.gotoBacks()
+        step3dir.gotoPhotoNum()
     }
 }

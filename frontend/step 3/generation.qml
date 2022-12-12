@@ -13,45 +13,58 @@ Item {
     signal gotoPhotoNum()
     property var filtr_progress: 1
     property var gen_progress: 0.2
-    Column {
+    GridLayout {
         anchors.centerIn: parent
-        spacing: 2
+        rows: 4
+        columns: 2
         Text {
-            text: qsTr("Фильтрация данных...")
+            text: qsTr("Фильтрация данных")
+            Layout.row: 0
+            Layout.column: 0
         }
         ProgressBar {
             value: filtr_progress
+            Layout.row: 1
+            Layout.column: 0
+        }
+        Button {
+            text: qsTr("Запустить")
+            Layout.row: 0
+            Layout.column: 1
+            Layout.rowSpan: 2
+            onClicked: {
+                manager.filtration()
+            }
         }
         Text {
-            text: qsTr("Генерация данных...")
+            text: qsTr("Генерация данных")
+            Layout.row: 2
+            Layout.column: 0
         }
         ProgressBar {
             value: manager.backsGenerationPercent
+            Layout.row: 3
+            Layout.column: 0
+        }
+        Button {
+            text: qsTr("Запустить")
+            
+            Layout.row: 2
+            Layout.column: 1
+            Layout.rowSpan: 2
+            onClicked: {
+                manager.backsGeneration()
+                
+            }
         }
     }
     Button {
-        id: button2
         text: qsTr("Назад")
         width: (parent.width / 6)
         anchors.margins: 20
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         onClicked: step3generation.gotoPhotoNum()
-    }
-    Button {
-        id: button3
-        text: qsTr("Запустить")
-        width: (parent.width / 6)
-        anchors.margins: 20
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        onClicked: {
-            button2.enabled = false
-            button3.enabled = false
-            manager.filtration()
-            manager.backsGeneration()
-            //step3generation.gotoMainView()
-        }
     }
     Loader {
         id: dirloader

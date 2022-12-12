@@ -6,7 +6,7 @@ import os
 class Dict4Json:
 
     def __init__(self, config):
-        self.processed_path = config['processed_path']
+        self.processed_path = config['preprocessing']['processed_folder']
         # self.all_details_names = os.listdir(config['filepath'])
         self.all_details_names = config['name_list']
         if 'Blank_surfaces' in self.all_details_names:

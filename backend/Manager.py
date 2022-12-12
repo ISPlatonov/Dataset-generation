@@ -2,6 +2,8 @@ import json
 import os
 from threading import Thread
 from time import sleep
+from locale import atof  # , setlocale, LC_NUMERIC
+# setlocale(LC_NUMERIC, 'French_Canada.1252')
 
 from PySide6.QtCore import Property, QObject, Signal, Slot
 
@@ -32,6 +34,11 @@ class Manager(QObject):
     imagesPathChanged = Signal()
     emptyTablePathChanged = Signal()
     configChanged = Signal()
+    snapshotsNumberChanged = Signal()
+    processedPathChanged = Signal()
+    backgroundsPathChanged = Signal()
+    rawPhotosPathChanged = Signal()
+    generatedPathChanged = Signal()
     photoNumChanged = Signal()
     backsGenerationPercentChanged = Signal()
     cameraNumChanged = Signal()
@@ -40,35 +47,59 @@ class Manager(QObject):
     backsGenerationEnded = Signal()
     iouChanged = Signal()
     maxNumberChanged = Signal()
+    maskIndicatorChanged = Signal()
+    roiIndicatorChanged = Signal()
+    staticIndicatorChanged = Signal()
+    configChanged = Signal()
     handIndicatorChanged = Signal()
     rectangleIndicatorChanged = Signal()
+    numberOfMasksChanged = Signal()
 
 
     def __init__(self):
         super(Manager, self).__init__()
         with open('config.json', 'r') as f:
             self._config = json.load(f)
+        
+        # For 1 step:
+        self._snapshots_number = self._config['snapshots']['snapshots_number']
+        self._raw_photos_path = self._config['1_step']['raw_photos_path']
+        
+        # For the 2 step:
+        self._processed_path = self._config['preprocessing']['processed_folder']
+        self._roi_indicator = self._config['preprocessing']['roi_indicator'] 
+        self._mask_indicator = self._config['preprocessing']['mask_indicator'] 
+        self._hand_indicator = self._config['preprocessing']['hand_indicator']
+        self._static_indicator = self._config['preprocessing']['static_indicator']
+
+        # For the 3 step:
+        self._backgrounds_path = self._config['backgrounds']
+        self._generated_path = self._config['generated_images']
+
+        # Others:
         self._name_list = self._config['name_list']
         self.nameListChanged.emit()
         self._images_path = self._config['images_path']
-        self.imagesPathChanged.emit()
+        self.imagesPathChanged.emit()   # зачем?  good taste?
         self.emptyTablePathChanged.emit()
+        
+
         self.hs = HandSegmentor(self._config)
         self.filter = Filtration(self._config)
         self.bg = BacksGeneration(self._config)
-        self._photo_num = self._config['generation_backs']['photo_num']
+
         self._iou = self._config['generation_backs']['iou']
-        self._hand_indicator = 1  # True
+        self._max_hands_on_photo = self._config['generation_backs']['max_hands_on_photo']
         self._rectangle_indicator = 1  # True
         self._max_details_on_photo = self._config['generation_backs']['max_details_on_photo']
         self._backsGenerationPercent = 0.
         self._camera_num = self._config["camera_num"]
         self._hsStatus = 0
-        self._empty_tables_directory = self._config['empty_tables_directory']
+        self._number_of_masks = len(os.listdir(self._raw_photos_path))  # dodelat!
+        self._photo_num = int(self._number_of_masks / self._max_details_on_photo)  # self._config['generation_backs']['photo_num']   # do i need to add signal.emit?
+
         if not os.path.exists(self._images_path):
             os.mkdir(self._images_path)
-        if not os.path.exists(self._empty_tables_directory):
-            os.mkdir(self._empty_tables_directory)
 
 
     def __set_name_list(self, name_list):
@@ -142,15 +173,6 @@ class Manager(QObject):
         self.imagesPathChanged.emit()
 
 
-    def __get_empty_tables_directory(self):
-        return os.path.abspath(self._empty_tables_directory)
-
-
-    def __set_empty_tables_directory(self, path: str):
-        self._empty_tables_directory = path
-        self.emptyTablePathChanged.emit()
-
-
     def __get_config(self):
         return self._config
 
@@ -189,7 +211,7 @@ class Manager(QObject):
         '''
         self.hsStatus = 0
         Thread(target=self.hs.main_job,
-               args=(self.hsEnded, self.increment_hsStatus),
+               args=(self.hsEnded, self.increment_hsStatus, self._config),
                daemon=True).start()
 
 
@@ -199,9 +221,11 @@ class Manager(QObject):
         self.filter.main_job()
 
 
+    @Slot()
     def backsGenerationStep(self):
         '''Emits backsGenerationPercentChanged signal'''
-        for percent in self.bg.main_job(int(self.photo_num), bool(self.hand_indicator), bool(self.rectangle_indicator)):
+        for percent in self.bg.main_job(int(self.photo_num), int(self.max_details_on_photo), float(self.iou),
+                                        int(self.max_hands_on_photo), bool(self.rectangle_indicator)):
             self.backsGenerationPercent = percent
         self.backsGenerationEnded.emit()
 
@@ -215,6 +239,104 @@ class Manager(QObject):
         self.backsGenerationPercent = 0
         Thread(target=self.backsGenerationStep, daemon=True).start()
 
+    # For 1 step:
+
+    @Slot("QVariant")
+    def __set_snapshots_number(self, snapshots_number: int):
+        self._snapshots_number = snapshots_number
+        self.snapshotsNumberChanged.emit()
+
+
+    def __get_snapshots_number(self):
+        return self._snapshots_number
+
+
+    @Slot("QVariant")
+    def __set_raw_photos_path(self, path: str):
+        self._raw_photos_path = path
+        self._config['1_step']['raw_photos_path'] = path
+        self.rawPhotosPathChanged.emit()
+
+
+    def __get_raw_photos_path(self):
+        return self._raw_photos_path
+
+
+    # For 2 step:
+    @Slot("QVariant")
+    def __set_processed_path(self, path: str):
+        self._processed_path = path
+        self._config['preprocessing']['processed_folder'] = path
+        self.processedPathChanged.emit()
+
+
+    def __get_processed_path(self):
+        return self._processed_path
+
+
+    @Slot("QVariant")
+    def __set_roi_indicator(self, roi_indicator: int):
+        self._roi_indicator = roi_indicator
+        self._config['preprocessing']['roi_indicator'] = roi_indicator
+        self.roiIndicatorChanged.emit()
+
+
+    def __get_roi_indicator(self):
+        return self._roi_indicator
+
+
+    @Slot("QVariant")
+    def __set_mask_indicator(self, mask_indicator: int):
+        self._mask_indicator = mask_indicator
+        self._config['preprocessing']['mask_indicator'] = mask_indicator
+        self.maskIndicatorChanged.emit()
+
+
+    def __get_mask_indicator(self):
+        return self._mask_indicator
+
+
+    @Slot("QVariant")
+    def __set_hand_indicator(self, hand_indicator: int):
+        self._hand_indicator = hand_indicator
+        self._config['preprocessing']['hand_indicator'] = hand_indicator
+        self.handIndicatorChanged.emit()
+
+
+    def __get_hand_indicator(self):
+        return self._hand_indicator
+
+
+    @Slot("QVariant")
+    def __set_static_indicator(self, static_indicator: int):
+        self._static_indicator = static_indicator
+        self.staticIndicatorChanged.emit()
+
+
+    def __get_static_indicator(self):
+        return self._static_indicator
+
+
+    # For 3 step:
+    @Slot("QVariant")
+    def __set_backgrounds_path(self, path: str):
+        self._backgrounds_path = path
+        self.backgroundsPathChanged.emit()
+
+
+    def __get_backgrounds_path(self):
+        return self._backgrounds_path
+
+
+    @Slot("QVariant")
+    def __set_generated_path(self, path: str):
+        self._generated_path = path
+        self.generatedPathChanged.emit()
+
+
+    def __get_generated_path(self):
+        return self._generated_path
+
 
     @Slot("QVariant")
     def __set_photo_num(self, photo_num: int):
@@ -227,8 +349,20 @@ class Manager(QObject):
 
 
     @Slot("QVariant")
+    def __set_max_details_on_photo(self, max_details_on_photo):
+        self._max_details_on_photo = float(max_details_on_photo)
+        self.maxNumberChanged.emit()
+
+
+    def __get_max_details_on_photo(self):
+        return self._max_details_on_photo
+
+
+    @Slot("QVariant")
     def __set_iou(self, iou):
-        self._iou = float(iou)
+        iou = iou.replace(',', '.')
+        print("IOU = ", iou)
+        self._iou = atof(iou)
         self.iouChanged.emit()
 
 
@@ -237,13 +371,23 @@ class Manager(QObject):
 
 
     @Slot("QVariant")
-    def __set_hand_indicator(self, hand_indicator: int):
-        self._hand_indicator = hand_indicator
+    def __set_number_of_masks(self, number_of_masks):
+        self._number_of_masks = number_of_masks
+        self.numberOfMasksChanged.emit()
+
+
+    def __get_number_of_masks(self):
+        return self._number_of_masks
+    
+
+    @Slot("QVariant")
+    def __set_max_hands_on_photo(self, max_hands_on_photo: int):
+        self._max_hands_on_photo = max_hands_on_photo
         self.handIndicatorChanged.emit()
 
 
-    def __get_hand_indicator(self):
-        return self._hand_indicator
+    def __get_max_hands_on_photo(self):
+        return self._max_hands_on_photo
 
 
     @Slot("QVariant")
@@ -255,20 +399,9 @@ class Manager(QObject):
     def __get_rectangle_indicator(self):
         return self._rectangle_indicator
 
-    
-    @Slot("QVariant")
-    def __set_max_details_on_photo(self, max_details_on_photo):
-        self._max_details_on_photo = float(max_details_on_photo)
-        self.max_details_on_photoChanged.emit()
-
-
-    def __get_max_details_on_photo(self):
-        return self._max_details_on_photo
-
 
     def __get_backsGenerationPercent(self):
         return self._backsGenerationPercent
-
 
     @Slot("QVariant")
     def __set_backsGenerationPercent(self, percent: float):
@@ -311,36 +444,85 @@ class Manager(QObject):
                                          fset=__set_config,
                                          notify=configChanged)
 
-    photo_num =                 Property("QVariant",
-                                         fget=__get_photo_num,
-                                         fset=__set_photo_num,
-                                         notify=photoNumChanged)
+    # for 1 step:                               
+    snapshots_number =          Property("QVariant",
+                                         fget=__get_snapshots_number,
+                                         fset=__set_snapshots_number,
+                                         notify=snapshotsNumberChanged)
 
+    # For 2 step
+    mask_indicator =            Property("QVariant",
+                                         fget=__get_mask_indicator,
+                                         fset=__set_mask_indicator,
+                                         notify=maskIndicatorChanged)
 
-    iou =                       Property("QVariant",
-                                         fget=__get_iou,
-                                         fset=__set_iou,
-                                         notify=iouChanged)
+    roi_indicator =             Property("QVariant",
+                                         fget=__get_roi_indicator,
+                                         fset=__set_roi_indicator,
+                                         notify=roiIndicatorChanged)
 
+    processed_path =                  Property("QVariant",
+                                         fget=__get_processed_path,
+                                         fset=__set_processed_path,
+                                         notify=processedPathChanged)
 
     hand_indicator =            Property("QVariant",
                                          fget=__get_hand_indicator,
                                          fset=__set_hand_indicator,
                                          notify=handIndicatorChanged)
 
+    static_indicator =          Property("QVariant",
+                                         fget=__get_static_indicator,
+                                         fset=__set_static_indicator,
+                                         notify=staticIndicatorChanged)
+                                        
+                                         
+    # For 3 step
+    backgrounds_path =          Property("QVariant",
+                                         fget=__get_backgrounds_path,
+                                         fset=__set_backgrounds_path,
+                                         notify=backgroundsPathChanged)
+
+    raw_photos_path =           Property("QVariant",
+                                         fget=__get_raw_photos_path,
+                                         fset=__set_raw_photos_path,
+                                         notify=rawPhotosPathChanged)
+
+    generated_path =            Property("QVariant",
+                                         fget=__get_generated_path,
+                                         fset=__set_generated_path,
+                                         notify=generatedPathChanged)
+                                         
+    photo_num =                 Property("QVariant",
+                                         fget=__get_photo_num,
+                                         fset=__set_photo_num,
+                                         notify=photoNumChanged)
+                                                                         
+    max_details_on_photo =      Property("QVariant",
+                                         fget=__get_max_details_on_photo,
+                                         fset=__set_max_details_on_photo,
+                                         notify=maxNumberChanged)
+
+    iou =                       Property("QVariant",
+                                         fget=__get_iou,
+                                         fset=__set_iou,
+                                         notify=iouChanged)
+
+    number_of_masks =           Property("QVariant",
+                                         fget=__get_number_of_masks,
+                                         fset=__set_number_of_masks,
+                                         notify=numberOfMasksChanged)
+
+    max_hands_on_photo =        Property("QVariant",
+                                         fget=__get_max_hands_on_photo,
+                                         fset=__set_max_hands_on_photo,
+                                         notify=handIndicatorChanged)
 
     rectangle_indicator =       Property("QVariant",
                                          fget=__get_rectangle_indicator,
                                          fset=__set_rectangle_indicator,
                                          notify=rectangleIndicatorChanged)
-                                         
-                                       
-    max_details_on_photo =      Property("QVariant",
-                                         fget=__get_max_details_on_photo,
-                                         fset=__set_max_details_on_photo,
-                                         notify=maxNumberChanged)
                                     
-
     camera_num =                Property("QVariant",
                                          fget=__get_camera_num,
                                          fset=__set_camera_num,
@@ -355,9 +537,3 @@ class Manager(QObject):
                                          fget=__get_hsStatus,
                                          fset=__set_hsStatus,
                                          notify=hsStatusChanged)
-
-    empty_tables_directory =    Property("QVariant",
-                                         fget=__get_empty_tables_directory,
-                                         fset=__set_empty_tables_directory,
-                                         notify=emptyTablePathChanged)
-

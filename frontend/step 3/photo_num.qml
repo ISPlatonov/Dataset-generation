@@ -9,7 +9,7 @@ import QtQml
 Item {
     id: step3photo_num
     signal gotoGeneration()
-    signal gotoBacks()
+    signal gotoStep3()
     GridLayout {
         id: layout
         anchors.centerIn: parent
@@ -29,18 +29,23 @@ Item {
             color: 'transparent'
             Layout.preferredWidth: 270
             Layout.preferredHeight: 40
-            Layout.maximumWidth: 300
             Text {
                 x: 5
                 text: "Количество изображений"
-                anchors.verticalCenter: parent.verticalCenter
+                // anchors.verticalCenter: parent.verticalCenter
+                // anchors.left: parent.left
             }
+            // Text {
+            //     // x: 5
+            //     // y: 25
+            //     text: "(optimal: no more than " + 200 / manager.max_details_on_photo + ")"
+            //     color: 'green'
+            // }
         }
         Rectangle {
             color: 'transparent'
             Layout.preferredWidth: 100
             Layout.preferredHeight: 40
-            Layout.maximumWidth: 200
             TextField {
                 validator: IntValidator {
                     bottom: 1;
@@ -58,7 +63,6 @@ Item {
             color: 'transparent'
             Layout.preferredWidth: 270
             Layout.preferredHeight: 40
-            Layout.maximumWidth: 300
             Text {
                 x: 5
                 text: "Максимальное количество деталей\nна одном изображении"
@@ -68,7 +72,6 @@ Item {
             color: 'transparent'
             Layout.preferredWidth: 100
             Layout.preferredHeight: 40
-            Layout.maximumWidth: 200
             TextField {
                 validator: IntValidator {
                     bottom: 1;
@@ -88,7 +91,6 @@ Item {
             color: 'transparent'
             Layout.preferredWidth: 270
             Layout.preferredHeight: 40
-            Layout.maximumWidth: 300
             Text {
                 x: 5
                 text: "Максимальный IoU между\nпересекающимися объектами (от 0 до 1)"
@@ -98,7 +100,6 @@ Item {
             color: 'transparent'
             Layout.preferredWidth: 100
             Layout.preferredHeight: 40
-            Layout.maximumWidth: 200
             TextField {
                 id: iou
                 text: manager.iou
@@ -138,29 +139,32 @@ Item {
             color: 'transparent'
             Layout.preferredWidth: 270
             Layout.preferredHeight: 40
-            Layout.maximumWidth: 300
             Text {
                 x: 5
-                text: "Добавление фото рук в наборы данных"
-                anchors.verticalCenter: parent.verticalCenter
+                text: "Максимальное количество рук\nна одном изображении"
             }
         }
         Rectangle {
             color: 'transparent'
             Layout.preferredWidth: 100
             Layout.preferredHeight: 40
-            Layout.maximumWidth: 200
-            CheckBox {
-                id: hand_check
-                checked: manager.hand_indicator
+            TextField {
+                validator: IntValidator {
+                    bottom: 1;
+                }
+                text: manager.max_hands_on_photo
                 anchors.centerIn: parent
+                horizontalAlignment: TextInput.AlignHCenter
+                maximumLength: 2
+                onTextEdited: {
+                    manager.max_hands_on_photo = text
+                }
             }
         }
         Rectangle {
             color: 'transparent'
             Layout.preferredWidth: 270
             Layout.preferredHeight: 40
-            Layout.maximumWidth: 300
             Text {
                 x: 5
                 text: "Наложение деталей на новые фоны\nпо прямоугольным маскам"
@@ -170,7 +174,6 @@ Item {
             color: 'transparent'
             Layout.preferredWidth: 100
             Layout.preferredHeight: 40
-            Layout.maximumWidth: 200
             CheckBox {
                 id: rectangle_check
                 checked: manager.rectangle_indicator
@@ -185,7 +188,7 @@ Item {
         anchors.margins: 20
         anchors.left: parent.left
         anchors.bottom: parent.bottom
-        onClicked: step3photo_num.gotoBacks()
+        onClicked: step3photo_num.gotoStep3()
     }
     Button {
         id: button3
