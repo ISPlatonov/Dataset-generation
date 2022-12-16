@@ -19,10 +19,18 @@ def scale_image_in_percent(img, relation):
 
 
 def rotation(img, angle):
+    times_90 = angle / 90
+    if times_90 > 0:
+        img = np.rot90(img, times_90)
     #angle = int(random.uniform(-angle, angle))
-    h, w = img.shape[:2]
-    M = cv2.getRotationMatrix2D((int(w/2), int(h/2)), angle, 1)
-    img = cv2.warpAffine(img, M, (w, h))
+    # if angle % 180 == 0:
+    #     h, w = img.shape[:2]
+    #     M = cv2.getRotationMatrix2D((int(w/2), int(h/2)), angle, 1)
+    #     img = cv2.warpAffine(img, M, (w, h))
+    # elif angle % 90 == 0:
+    #     w, h = img.shape[:2]
+    #     M = cv2.getRotationMatrix2D((int(w/2), int(h/2)), angle, 1)
+    #     img = cv2.warpAffine(img, M, (w, h))
     return img
 
 

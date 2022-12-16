@@ -38,10 +38,11 @@ Item {
             }
         }
         TextField {
+            id: processed_field
             Layout.columnSpan: 2
             Layout.minimumWidth: 270
             // Layout.maximumWidth: 670
-            text: manager.proccessed_path
+            text: manager.processed_path
         }
         Button {
             text: "Изменить"
@@ -61,7 +62,7 @@ Item {
             }
         }
         TextField {
-            id: text_field2
+            id: back_field
             Layout.columnSpan: 2
             Layout.minimumWidth: 270
             text: manager.backgrounds_path
@@ -86,7 +87,7 @@ Item {
             }
         }
         TextField {
-            id: text_field3
+            id: generated_field
             Layout.columnSpan: 2
             Layout.minimumWidth: 270
             text: manager.generated_path
@@ -117,7 +118,12 @@ Item {
         anchors.margins: 20
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        onClicked: step3dir.gotoPhotoNum()
+        onClicked: {
+            step3dir.gotoPhotoNum();
+            manager.processed_path = processed_field.text;
+            manager.backgrounds_path = back_field.text;
+            manager.generated_path = generated_field.text;
+        }
     }
     FolderDialog {
         id: fileDialog

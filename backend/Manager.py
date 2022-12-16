@@ -54,6 +54,7 @@ class Manager(QObject):
     handIndicatorChanged = Signal()
     rectangleIndicatorChanged = Signal()
     numberOfMasksChanged = Signal()
+    numberHandsChanged = Signal()
 
 
     def __init__(self):
@@ -73,8 +74,8 @@ class Manager(QObject):
         self._static_indicator = self._config['preprocessing']['static_indicator']
 
         # For the 3 step:
-        self._backgrounds_path = self._config['backgrounds']
-        self._generated_path = self._config['generated_images']
+        self._backgrounds_path = self._config['generation_backs']['backgrounds']
+        self._generated_path = self._config['generation_backs']['generation_folder']
 
         # Others:
         self._name_list = self._config['name_list']
@@ -90,16 +91,54 @@ class Manager(QObject):
 
         self._iou = self._config['generation_backs']['iou']
         self._max_hands_on_photo = self._config['generation_backs']['max_hands_on_photo']
-        self._rectangle_indicator = 1  # True
+        self._rectangle_indicator = self._config['generation_backs']['rectangle_indicator']  # True
         self._max_details_on_photo = self._config['generation_backs']['max_details_on_photo']
         self._backsGenerationPercent = 0.
         self._camera_num = self._config["camera_num"]
         self._hsStatus = 0
-        self._number_of_masks = len(os.listdir(self._raw_photos_path))  # dodelat!
-        self._photo_num = int(self._number_of_masks / self._max_details_on_photo)  # self._config['generation_backs']['photo_num']   # do i need to add signal.emit?
+        if not os.path.exists(self._processed_path):
+            os.mkdir(self._processed_path)
+        self._number_of_masks = self.count_masks() #len(os.listdir(self._processed_path))  # dodelat!
+        self.get_mask_folders()  # плохо что считается при запусkе а надо при переходе на третий этап
+        self.get_hand_folders()
+
+        self._photo_num = int(self._number_of_masks * 4 / self._max_details_on_photo)  # self._config['generation_backs']['photo_num']   # do i need to add signal.emit?
 
         if not os.path.exists(self._images_path):
             os.mkdir(self._images_path)
+
+    def count_masks(self):
+        count = 0
+        for dir in os.listdir(self._processed_path):
+            if os.path.exists(self._processed_path + "/" + dir + "/" + dir + "_roi.jpg"):
+                count += 1
+        self._config['generation_backs']['number_of_masks'] = count
+        return count
+
+    def count_hands(self):
+        count = 0
+        for dir in os.listdir(self._processed_path):
+            if os.path.exists(self._processed_path + "/" + dir + "/" + dir + "_continious_hand_bw_mask.jpg"):
+                count += 1
+        self._config['generation_backs']['number_of_hand_masks'] = count
+        return count
+
+
+    def get_mask_folders(self):
+        self._config['generation_backs']['all_mask_folders'] = []
+        for dir in os.listdir(self._processed_path):
+            if os.path.exists(self._processed_path + dir + "/" + dir + "_roi.jpg"):
+                self._config['generation_backs']['all_mask_folders'].append(dir)
+        return self._config['generation_backs']['all_mask_folders']
+
+
+    def get_hand_folders(self):
+        self._config['generation_backs']['all_hand_folders'] = []
+        for dir in os.listdir(self._processed_path):
+            # print("\ntttt", (self._processed_path + "/" + dir + "/" + dir + "_continious_hand_bw_mask.jpg"), "\n")
+            if os.path.exists(self._processed_path + dir + "/" + dir + "_continious_hand_bw_mask.jpg"):
+                self._config['generation_backs']['all_hand_folders'].append(dir)
+        return self._config['generation_backs']['all_hand_folders']
 
 
     def __set_name_list(self, name_list):
@@ -224,8 +263,7 @@ class Manager(QObject):
     @Slot()
     def backsGenerationStep(self):
         '''Emits backsGenerationPercentChanged signal'''
-        for percent in self.bg.main_job(int(self.photo_num), int(self.max_details_on_photo), float(self.iou),
-                                        int(self.max_hands_on_photo), bool(self.rectangle_indicator)):
+        for percent in self.bg.main_job(self._config):
             self.backsGenerationPercent = percent
         self.backsGenerationEnded.emit()
 
@@ -321,6 +359,7 @@ class Manager(QObject):
     @Slot("QVariant")
     def __set_backgrounds_path(self, path: str):
         self._backgrounds_path = path
+        self._config['generation_backs']['backgrounds'] = path
         self.backgroundsPathChanged.emit()
 
 
@@ -331,6 +370,7 @@ class Manager(QObject):
     @Slot("QVariant")
     def __set_generated_path(self, path: str):
         self._generated_path = path
+        self._config['generation_backs']['generation_folder'] = path
         self.generatedPathChanged.emit()
 
 
@@ -341,6 +381,7 @@ class Manager(QObject):
     @Slot("QVariant")
     def __set_photo_num(self, photo_num: int):
         self._photo_num = photo_num
+        self._config['generation_backs']['photo_num'] = photo_num
         self.photoNumChanged.emit()
 
 
@@ -351,6 +392,7 @@ class Manager(QObject):
     @Slot("QVariant")
     def __set_max_details_on_photo(self, max_details_on_photo):
         self._max_details_on_photo = float(max_details_on_photo)
+        self._config['generation_backs']['max_details_on_photo'] = int(max_details_on_photo)
         self.maxNumberChanged.emit()
 
 
@@ -361,8 +403,8 @@ class Manager(QObject):
     @Slot("QVariant")
     def __set_iou(self, iou):
         iou = iou.replace(',', '.')
-        print("IOU = ", iou)
         self._iou = atof(iou)
+        self._config['generation_backs']['iou'] = self._iou
         self.iouChanged.emit()
 
 
@@ -382,7 +424,8 @@ class Manager(QObject):
 
     @Slot("QVariant")
     def __set_max_hands_on_photo(self, max_hands_on_photo: int):
-        self._max_hands_on_photo = max_hands_on_photo
+        self._max_hands_on_photo = int(max_hands_on_photo)
+        self._config['generation_backs']['max_hands_on_photo'] = int(max_hands_on_photo)
         self.handIndicatorChanged.emit()
 
 
@@ -393,6 +436,7 @@ class Manager(QObject):
     @Slot("QVariant")
     def __set_rectangle_indicator(self, rectangle_indicator: int):
         self._rectangle_indicator = rectangle_indicator
+        self._config['generation_backs']['rectangle_indicator'] = rectangle_indicator
         self.rectangleIndicatorChanged.emit()
 
 
@@ -461,7 +505,7 @@ class Manager(QObject):
                                          fset=__set_roi_indicator,
                                          notify=roiIndicatorChanged)
 
-    processed_path =                  Property("QVariant",
+    processed_path =            Property("QVariant",
                                          fget=__get_processed_path,
                                          fset=__set_processed_path,
                                          notify=processedPathChanged)
@@ -474,8 +518,7 @@ class Manager(QObject):
     static_indicator =          Property("QVariant",
                                          fget=__get_static_indicator,
                                          fset=__set_static_indicator,
-                                         notify=staticIndicatorChanged)
-                                        
+                                         notify=staticIndicatorChanged)                                      
                                          
     # For 3 step
     backgrounds_path =          Property("QVariant",
@@ -497,7 +540,7 @@ class Manager(QObject):
                                          fget=__get_photo_num,
                                          fset=__set_photo_num,
                                          notify=photoNumChanged)
-                                                                         
+ 
     max_details_on_photo =      Property("QVariant",
                                          fget=__get_max_details_on_photo,
                                          fset=__set_max_details_on_photo,

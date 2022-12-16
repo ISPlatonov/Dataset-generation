@@ -47,6 +47,7 @@ Item {
             Layout.preferredWidth: 100
             Layout.preferredHeight: 40
             TextField {
+                id: photo_num_field
                 validator: IntValidator {
                     bottom: 1;
                 }
@@ -101,7 +102,7 @@ Item {
             Layout.preferredWidth: 100
             Layout.preferredHeight: 40
             TextField {
-                id: iou
+                id: iou_field
                 text: manager.iou
                 horizontalAlignment: TextInput.AlignHCenter
                 validator: DoubleValidator {
@@ -149,6 +150,7 @@ Item {
             Layout.preferredWidth: 100
             Layout.preferredHeight: 40
             TextField {
+                id: hand_field
                 validator: IntValidator {
                     bottom: 1;
                 }
@@ -198,12 +200,17 @@ Item {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         onClicked: { 
-            step3photo_num.gotoGeneration(); console.log("iou === ", manager.iou);
-            console.log("1 = ", hand_check.checkState);
-            manager.hand_indicator = hand_check.checkState != 0 ? 1 : 0;
-            console.log("hand = ", manager.hand_indicator);
+            step3photo_num.gotoGeneration(); 
+            console.log("iou === ", manager.iou);
+            // console.log("1 = ", hand_check.checkState);
+            // manager.hand_indicator = hand_check.checkState != 0 ? 1 : 0;
+            // console.log("hand = ", manager.hand_indicator);
             manager.rectangle_indicator = rectangle_check.checkState != 0 ? 1 : 0;
             console.log("rectangle = ", manager.rectangle_indicator);
+            manager.photo_num = parseInt(photo_num_field.text);
+            manager.iou = parseFloat(iou_field.text);
+            console.log("photo_num = ", manager.photo_num);
+            manager.max_hands_on_photo = parseInt(hand_field.text)
 
         }
     }

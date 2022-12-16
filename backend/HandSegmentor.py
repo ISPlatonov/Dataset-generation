@@ -22,9 +22,8 @@ class HandSegmentor:
         self.filename = config["filename"]  # для тестирования на конкретном фото
         self.empty_table_filepath_to_folder_ = self.filepath + 'Blank_surfaces/'
         self.empty_table_photo_name_ = config["empty_table_photo_name_"]
-        self.output_dir = self.filepath + 'processed2/'
         self.root_dir_with_dirs = self.filepath
-        self.need_hand = config["need_hand"]
+        # self.need_hand = config["need_hand"]
         self.min_roi_height = config["roi"]["height"]
         self.min_roi_width = config["roi"]["width"]
         self.yolo_classificator_weigths_path = config["yolo_classificator_weigths_path"]
@@ -148,13 +147,6 @@ class HandSegmentor:
         img = cv2.imread(filepath)  # считывание текущего изображения - оставить ли?
         img_original = img.copy()
         folder_name_path = output_dir + '{}'.format(image_name)
-        try:
-            os.makedirs(folder_name_path)
-        except OSError as e:
-            pass
-
-        cv2.imwrite(folder_name_path + '/{}.jpg'.format(image_name), img_original)
-
 
         points = self.find_detail_on_photo_yolo(self.yolo_classificator_weigths_path, 
                                                                self.yolo_repo_path, 
@@ -166,8 +158,16 @@ class HandSegmentor:
             roi = img_original[points[2]:points[3], points[0]:points[1]]
         else:
             return None  
+        
+        try:
+            os.makedirs(folder_name_path)
+        except OSError as e:
+            pass
+
+        cv2.imwrite(folder_name_path + '/{}.jpg'.format(image_name), img_original)
        
         if config_dict['preprocessing']['roi_indicator']:
+            # print("\nYOUR PATH IS ", folder_name_path + '/{}_roi.jpg'.format(image_name), "\n", roi)
             cv2.imwrite(folder_name_path + '/{}_roi.jpg'.format(image_name), roi)
        
         if config_dict['preprocessing']['hand_indicator']:
@@ -406,7 +406,7 @@ class HandSegmentor:
                                                 self.empty_table_filepath_to_folder_,
                                                 self.empty_table_photo_name_,),
                                                 kwargs={'eps': 100, 'show': False, 'save': True,
-                                                'need_hand': self.need_hand,
+                                                'need_hand': config_dict['preprocessing']['hand_indicator'],
                                                 'increment_hsStatus': increment_hsStatus,
                                                 'increment': increment})
                                             )

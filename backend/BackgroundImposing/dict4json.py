@@ -9,25 +9,30 @@ class Dict4Json:
         self.processed_path = config['preprocessing']['processed_folder']
         # self.all_details_names = os.listdir(config['filepath'])
         self.all_details_names = config['name_list']
-        if 'Blank_surfaces' in self.all_details_names:
-            self.all_details_names.remove('Blank_surfaces')
-        if 'Blank_surface' in self.all_details_names:
-            self.all_details_names.remove('Blank_surface')
-        if 'processed' in self.all_details_names:
-            self.all_details_names.remove('processed')
-        if '.gitignore' in self.all_details_names:
-            self.all_details_names.remove('.gitignore')
-        if 'backgrounds' in self.all_details_names:
-            self.all_details_names.remove('backgrounds')
-        if 'generated_images' in self.all_details_names:
-            self.all_details_names.remove('generated_images')
-        if 'hand' not in self.all_details_names:
-            self.all_details_names.append('hand')
-        self.backgrounds = config['backgrounds']
-        self.generated_images = config['generated_images']
+        # if 'Blank_surfaces' in self.all_details_names:
+        #     self.all_details_names.remove('Blank_surfaces')
+        # if 'Blank_surface' in self.all_details_names:
+        #     self.all_details_names.remove('Blank_surface')
+        # if 'processed' in self.all_details_names:
+        #     self.all_details_names.remove('processed')
+        # if '.gitignore' in self.all_details_names:
+        #     self.all_details_names.remove('.gitignore')
+        # if 'backgrounds' in self.all_details_names:
+        #     self.all_details_names.remove('backgrounds')
+        # if 'generated_images' in self.all_details_names:
+        #     self.all_details_names.remove('generated_images')
+        # if 'hand' not in self.all_details_names:
+        #     self.all_details_names.append('hand')
+        self.backgrounds = config['generation_backs']['backgrounds']
+        self.generated_images = config['generation_backs']['generation_folder']
         self.names_to_category_id_dict = dict()
-        for i in range(len(self.all_details_names)):
-            self.names_to_category_id_dict[self.all_details_names[i]] = i
+        # for i in range(len(self.all_details_names)):
+        #     self.names_to_category_id_dict[self.all_details_names[i]] = i
+
+    def define_dict_for_yolo(self, config_dict):
+        for i in range(len(config_dict['name_list'])):
+            self.names_to_category_id_dict[config_dict['name_list'][i]] = i
+        print("\n\n\n\nLIST:", self.names_to_category_id_dict)
 
 
     def img_with_rectangle(self, img, rect):
@@ -42,7 +47,7 @@ class Dict4Json:
                                 color=(0, 0, 255), thickness=1)
 
 
-    def get_category_id(self, detail):
+    def get_category_id(self, detail, config_dict):
         """
         Функция сопоставления имени детали её номеру
         :param detail: str - name of detail
@@ -51,6 +56,8 @@ class Dict4Json:
         if detail in self.names_to_category_id_dict:
             category_id = self.names_to_category_id_dict[detail]
         else:
+            print("dict:", self.names_to_category_id_dict)
+            print("detail:", detail)
             raise Exception("No such name in dict")
         return category_id
 
@@ -145,7 +152,7 @@ class Dict4Json:
         return my_dict
 
 
-    def writing_in_json(self, detail_num, img, detail_name, id, approx, count, d, names_list):
+    def writing_in_json(self, detail_num, img, detail_name, id, approx, count, d, names_list, config_dict):
         """
         Функция создания/редактирования словаря - в зависимости от случая.
         :param detail_num: int
@@ -166,7 +173,7 @@ class Dict4Json:
         except FileExistsError:
             pass
         file_name = f'{dir_name}/img_{id}.jpg'
-        category_id = self.get_category_id(detail_name)
+        category_id = self.get_category_id(detail_name, config_dict)
         yolo_points = [approx[1], approx[0], approx[3], approx[2]]
         if detail_num <= 0:
             d = self.create_json_dictionary(img, file_name, yolo_points, category_id, id, is_crowd)
@@ -180,7 +187,7 @@ class Dict4Json:
         return d
 
 
-    def write_yolo_txt(self, d, file_name, a):
+    def write_yolo_txt(self, d, file_name, details_number):
         """
         Функция создания текстовых файлов с разметкой для йолы.
         :param d: dictionary
@@ -196,7 +203,8 @@ class Dict4Json:
         except FileExistsError:
             pass
         f = open(f'{dir_name}/{file_name}.txt', 'w+')
-        for i in range(a):
+        for i in range(details_number):
+            # print("d is", d, "\ni:", i)# "\nannot", len(d["annotations"]))
             x_min = d["annotations"][i]["yolo"][0]
             x_max = d["annotations"][i]["yolo"][2]
             yolo_x = (x_max + x_min) / (yolo_width * 2)
@@ -211,4 +219,5 @@ class Dict4Json:
             f.write(string)
             # img = img_with_rectangle(img, d["annotations"][i]["yolo"])
         f.close()
-        print(f'self.names_to_category_id_dict: {self.names_to_category_id_dict}')
+        # print("\n\n\n\nLIST:", self.names_to_category_id_dict)
+        # print(f'self.names_to_category_id_dict: {self.names_to_category_id_dict}')
