@@ -15,27 +15,8 @@ Item {
     property var gen_progress: 0.2
     GridLayout {
         anchors.centerIn: parent
-        rows: 4
+        rows: 2
         columns: 2
-        Text {
-            text: qsTr("Фильтрация данных")
-            Layout.row: 0
-            Layout.column: 0
-        }
-        ProgressBar {
-            value: filtr_progress
-            Layout.row: 1
-            Layout.column: 0
-        }
-        Button {
-            text: qsTr("Запустить")
-            Layout.row: 0
-            Layout.column: 1
-            Layout.rowSpan: 2
-            onClicked: {
-                manager.filtration()
-            }
-        }
         Text {
             text: qsTr("Генерация данных")
             Layout.row: 2

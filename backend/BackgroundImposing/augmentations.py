@@ -5,7 +5,6 @@ import numpy as np
 
 def resize_specific_width_and_height(img, width, height):
     dim = (width, height)
-    # resize image
     resized = cv2.resize(img, dim, interpolation=cv2.INTER_CUBIC)
     return resized
 
@@ -22,15 +21,6 @@ def rotation(img, angle):
     times_90 = angle / 90
     if times_90 > 0:
         img = np.rot90(img, times_90)
-    #angle = int(random.uniform(-angle, angle))
-    # if angle % 180 == 0:
-    #     h, w = img.shape[:2]
-    #     M = cv2.getRotationMatrix2D((int(w/2), int(h/2)), angle, 1)
-    #     img = cv2.warpAffine(img, M, (w, h))
-    # elif angle % 90 == 0:
-    #     w, h = img.shape[:2]
-    #     M = cv2.getRotationMatrix2D((int(w/2), int(h/2)), angle, 1)
-    #     img = cv2.warpAffine(img, M, (w, h))
     return img
 
 

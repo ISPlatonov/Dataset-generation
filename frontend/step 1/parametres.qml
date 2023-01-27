@@ -29,27 +29,6 @@ Item {
         }
         Rectangle {
             color: 'transparent'
-            Layout.preferredWidth: 270
-            Layout.preferredHeight: 20
-            Layout.columnSpan: 2
-
-            Text {
-                x: 5
-                text: "Статическая разметка"
-            }
-        }
-        Rectangle {
-            color: 'transparent'
-            Layout.preferredWidth: 100
-            Layout.preferredHeight: 40
-            CheckBox {
-                id: static_check
-                checked: manager.static_indicator
-                anchors.centerIn: parent
-            }
-        }
-        Rectangle {
-            color: 'transparent'
             Layout.fillWidth: true
             Layout.preferredHeight: 20
             Layout.columnSpan: 3
@@ -62,7 +41,6 @@ Item {
             id: raw_photos_path
             Layout.columnSpan: 2
             Layout.minimumWidth: 270
-            // Layout.maximumWidth: 670
             text: manager.raw_photos_path
         }
         Button {
@@ -87,23 +65,16 @@ Item {
             Layout.preferredWidth: 100
             Layout.preferredHeight: 40
             Layout.columnSpan: 3
-            // Layout.minimumWidth: 270
             Layout.alignment: Qt.AlignHCenter
-            // Layout.minimumWidth: parent
             TextField {
                 anchors.centerIn: parent
                 validator: IntValidator {
                     bottom: 1;
                 }
                 text: manager.snapshots_number
-                horizontalAlignment: TextInput.AlignHCenter
-                // anchors.fill: parent
-
-
-                
+                horizontalAlignment: TextInput.AlignHCenter                
                 onTextEdited: {
                     manager.photo_num = text
-                    console.log("photo num = " + text)
                 }
             }
         }
@@ -122,11 +93,9 @@ Item {
             Layout.preferredWidth: 100
             Layout.preferredHeight: 40
             Layout.columnSpan: 3
-            // Layout.minimumWidth: 270
             Layout.alignment: Qt.AlignHCenter
-            // Layout.minimumWidth: parent
             TextField {
-                id: pause
+                id: pause_field
                 text: manager.iou
                 horizontalAlignment: TextInput.AlignHCenter
                 validator: DoubleValidator {
@@ -141,13 +110,10 @@ Item {
                     if (numericValue >= 1.0 || numericValue < 0.0)
                     {
                         text = previousText
-                        console.log("numericValue = ", numericValue)
                     }
                     previousText = text
                     var numericValue = getValue()
-                    // text = Number(previousText)
-                    manager.iou = text // Number(previousText)
-                    console.log("iou = " + text)
+                    manager.iou = text
                 }
                 function setValue(_value)
                 {
@@ -163,11 +129,6 @@ Item {
     }
     FolderDialog {
         id: fileDialog
-        onAccepted: {
-            console.log("dir: " + fileDialog.fileUrls);
-        }
-        // nameFilters: ["*/"]
-        // selectFolder: true
     }
     Loader {
         id: dirloader
@@ -197,7 +158,7 @@ Item {
         anchors.bottom: parent.bottom
         onClicked: {
             manager.raw_photos_path = raw_photos_path.text
-            manager.static_indicator = static_check.checkState
+            manager.snapshot_delay = parseFloat(pause_field.text);
             parametres.gotoCamera()
             }
     }

@@ -9,35 +9,34 @@
                  ],
 
     "filepath": "images/",
-    "filename": "biba/0.jpg",
     "1_step": {"raw_photos_path": "images/"},
-    "empty_table_photo_name_": "empty_table.jpg",
-    "empty_table": "empty_table",
-    "empty_tables_directory": "images/Blank_surfaces",
-    "need_hand": true,
     "camera_num": 0,
     "mediapipe": { "max_num_hands": 5,
                    "min_detection_confidence": 0.3},
     "roi": { "height": 50,
              "width": 50
             },
-    "filtration": { "blurry_threshold": 100
-    },
     "preprocessing": { "processed_folder": "imagesprocessed/",
                        "roi_indicator": 1,
                        "mask_indicator": 1,
                        "hand_indicator": 1,
-                       "static_indicator": 0},
+                       "static_indicator": 0,
+                       "val_folder": "val_dataset",
+                       "val_points_folder": "val_points_folder",
+                       "make_validation_dataset": 0,
+                       "val_width": 640,
+                       "val_height": 480},
     "generation_backs": { "generation_folder": "imagesgeneration/",
-                          "backgrounds": "images/backgrounds",
+                          "yolo_folder": "yolo_points",
+                          "backgrounds": "backgrounds",
                           "photo_num": 10,
                           "iou": 0.2,
                           "max_details_on_photo": 5,
                           "max_hands_on_photo": 2,
                           "height": 2160,
                           "width": 4096,
-                          "final_height": 1080,
-                          "final_width": 1920,
+                          "final_height": 480,
+                          "final_width": 640,
                           "number_hands": 1,
                           "rectangle_indicator": 1,
                           "number_of_masks": 0,
@@ -45,7 +44,7 @@
                           "all_mask_folders": [],
                           "all_hand_folders": []
                 },
-    "max_number_of_details": 15,
+    "max_number_of_details": 6,
     "graphics": {
         "window_size": {
             "height": 640,
@@ -54,7 +53,7 @@
         "unit_height": 50
     },
     "snapshots": {
-        "snapshot_delay": 0,
-        "snapshots_number": 1000
+        "snapshot_delay": 0.2,
+        "snapshots_number": 30
     }
 }

@@ -7,32 +7,18 @@ class Dict4Json:
 
     def __init__(self, config):
         self.processed_path = config['preprocessing']['processed_folder']
-        # self.all_details_names = os.listdir(config['filepath'])
         self.all_details_names = config['name_list']
-        # if 'Blank_surfaces' in self.all_details_names:
-        #     self.all_details_names.remove('Blank_surfaces')
-        # if 'Blank_surface' in self.all_details_names:
-        #     self.all_details_names.remove('Blank_surface')
-        # if 'processed' in self.all_details_names:
-        #     self.all_details_names.remove('processed')
-        # if '.gitignore' in self.all_details_names:
-        #     self.all_details_names.remove('.gitignore')
-        # if 'backgrounds' in self.all_details_names:
-        #     self.all_details_names.remove('backgrounds')
-        # if 'generated_images' in self.all_details_names:
-        #     self.all_details_names.remove('generated_images')
-        # if 'hand' not in self.all_details_names:
-        #     self.all_details_names.append('hand')
         self.backgrounds = config['generation_backs']['backgrounds']
         self.generated_images = config['generation_backs']['generation_folder']
         self.names_to_category_id_dict = dict()
         # for i in range(len(self.all_details_names)):
         #     self.names_to_category_id_dict[self.all_details_names[i]] = i
 
+
+
     def define_dict_for_yolo(self, config_dict):
         for i in range(len(config_dict['name_list'])):
             self.names_to_category_id_dict[config_dict['name_list'][i]] = i
-        print("\n\n\n\nLIST:", self.names_to_category_id_dict)
 
 
     def img_with_rectangle(self, img, rect):
@@ -83,7 +69,7 @@ class Dict4Json:
         return part_dict
 
 
-    def get_yolo_points(self, points): #########################################
+    def get_yolo_points(self, points): 
         """
         Функция получения из множества точек, приближающих изображение,
         двух, которые заключат фигуру в прямоугольник.
@@ -147,7 +133,6 @@ class Dict4Json:
             labels = list()
             for i in range(len(names_list)):
                 labels.append({'id':str(i), 'name': names_list[i]})
-            #labels.append({'id':str(len(names_list)), 'name': 'hand'})
             my_dict["categories"] = labels
         return my_dict
 
@@ -187,7 +172,7 @@ class Dict4Json:
         return d
 
 
-    def write_yolo_txt(self, d, file_name, details_number):
+    def write_yolo_txt(self, d, file_name, details_number, dir_name):
         """
         Функция создания текстовых файлов с разметкой для йолы.
         :param d: dictionary
@@ -195,16 +180,10 @@ class Dict4Json:
         :param a: int - количество деталей на изображении
         :return:
         """
-        dir_name = 'yolo_points'
-        yolo_width = 4096.0 #4096.0 #TODO: ADD TO CONFIG AND CHANGE CONSTANT
-        yolo_height = 2160.0 # 2160.0 #TODO: ADD TO CONFIG AND CHANGE CONSTANT
-        try:
-            os.mkdir(dir_name)
-        except FileExistsError:
-            pass
+        yolo_width = 4096.0 
+        yolo_height = 2160.0 
         f = open(f'{dir_name}/{file_name}.txt', 'w+')
         for i in range(details_number):
-            # print("d is", d, "\ni:", i)# "\nannot", len(d["annotations"]))
             x_min = d["annotations"][i]["yolo"][0]
             x_max = d["annotations"][i]["yolo"][2]
             yolo_x = (x_max + x_min) / (yolo_width * 2)
@@ -217,7 +196,5 @@ class Dict4Json:
             yolo_points = [yolo_x, yolo_y, yolo_w, yolo_h]
             string = f'{d["annotations"][i]["category_id"]} {yolo_x} {yolo_y} {yolo_w} {yolo_h}\n'
             f.write(string)
-            # img = img_with_rectangle(img, d["annotations"][i]["yolo"])
         f.close()
-        # print("\n\n\n\nLIST:", self.names_to_category_id_dict)
-        # print(f'self.names_to_category_id_dict: {self.names_to_category_id_dict}')
+

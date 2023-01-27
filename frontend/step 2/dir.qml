@@ -62,7 +62,6 @@ Item {
             id: processed_text_field
             Layout.columnSpan: 2
             Layout.minimumWidth: 270
-            // Layout.maximumWidth: 670
             text: manager.processed_path
         }
         Button {
@@ -132,34 +131,12 @@ Item {
                 anchors.centerIn: parent
             }
         }
-        Rectangle {
-            color: 'transparent'
-            Layout.fillWidth: true
-            Layout.preferredHeight: 20
-            Layout.columnSpan: 2
-            Text {
-                anchors.centerIn: parent
-                text: "Статическое получение roi"
-            }
-        }
-        Rectangle {
-            color: 'transparent'
-            Layout.preferredWidth: 100
-            Layout.preferredHeight: 40
-            CheckBox {
-                id: static_check_box
-                checked: manager.static_indicator
-                anchors.centerIn: parent
-            }
-        }
     }
     FolderDialog {
         id: fileDialog
         onAccepted: {
             console.log("dir: " + fileDialog.fileUrls);
         }
-        // nameFilters: ["*/"]
-        // selectFolder: true
     }
     Loader {
         id: dirloader
@@ -193,7 +170,6 @@ Item {
             manager.roi_indicator = roi_check_box.checkState
             manager.mask_indicator = mask_check_box.checkState
             manager.hand_indicator = hand_check_box.checkState
-            manager.static_indicator = static_check_box.checkState
 
             step2dir.gotoThreshold()
         }

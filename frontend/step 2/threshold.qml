@@ -5,10 +5,7 @@ import QtQuick.Layouts
 import QtQuick.Dialogs
 import Qt.labs.platform
 import QtQml
-/*
-1) Загрузить фотку
-2) Привязать ползунок к фотке (цветопорог)
-*/
+
 Item {
     id: step2threshold
     signal gotoMainView()
@@ -27,9 +24,6 @@ Item {
                 manager.handSegmentor()
             }
         }
-        // ProgressBar {
-        //     value: manager.hsStatus
-        // }
     }
     
     Button {
@@ -53,11 +47,4 @@ Item {
         id: thresholdloader
         anchors.fill: parent
     }
-    // Connections {  // why?
-    //     target: manager
- 
-    //     onHsEnded: {
-    //         gotoStep3()
-    //     }
-    // }
 }

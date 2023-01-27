@@ -6,10 +6,9 @@ def get_detail_path(detail_name, back_directory):
     """
     Функция генерации имени файла с изображением и его маски.
     """
-    print(detail_name)
     detail_folder = random.choice([x for x in os.listdir(back_directory) if x.find(detail_name) != -1])
     name = back_directory + '/' + detail_folder + '/' + detail_folder
-    return f'{name}_roi.jpg', f'{name}_roi.jpg'  # f'{name}_detail_on_black_bg.jpg', f'{name}_detail_bw_mask.jpg'
+    return f'{name}_roi.jpg', f'{name}_roi.jpg' 
 
 def get_shuffle_detail_path(i_mask, all_masks_folders, back_directory):
     i = int(i_mask / 4)
@@ -24,10 +23,7 @@ def get_hand_path(i, all_hand_folders, back_directory):
         :param detail: str
         :return: str
     """
-    # detail_folder = random.choice(os.listdir(back_directory))
-    # name = back_directory + detail_folder + '/' + detail_folder
     name = back_directory + all_hand_folders[i] + '/' + all_hand_folders[i]
-    # detail_name = all_hand_folders[i][:all_hand_folders[i].rfind('_')]
     return f'{name}_hand_on_black_back.jpg', f'{name}_continious_hand_bw_mask.jpg'
 
 def get_dst_path(back_directory):

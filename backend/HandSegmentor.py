@@ -1,7 +1,7 @@
 from pyclbr import Function
 from typing import Generator, Iterable
 import cv2
-import mediapipe as mp  # библиотека для отслеживания рук
+import mediapipe as mp
 import os
 import numpy as np
 import json
@@ -11,6 +11,8 @@ from pycocotools.coco import COCO
 from threading import Thread, active_count
 from PySide6.QtCore import Signal
 from backend.BackgroundImposing.paths import *
+from backend.BackgroundImposing.dict4json import Dict4Json
+from backend.BackgroundImposing.augmentations import *
 import torch
 import pandas as pd
 
@@ -18,33 +20,14 @@ import pandas as pd
 class HandSegmentor:
 
     def __init__(self, config: dict):
-        self.filepath =  config["filepath"] # для тестирования на конкретном фото
-        self.filename = config["filename"]  # для тестирования на конкретном фото
-        self.empty_table_filepath_to_folder_ = self.filepath + 'Blank_surfaces/'
-        self.empty_table_photo_name_ = config["empty_table_photo_name_"]
-        self.root_dir_with_dirs = self.filepath
-        # self.need_hand = config["need_hand"]
+        self.root_dir_with_dirs = config["filepath"] 
         self.min_roi_height = config["roi"]["height"]
         self.min_roi_width = config["roi"]["width"]
         self.yolo_classificator_weigths_path = config["yolo_classificator_weigths_path"]
         self.yolo_repo_path = config["yolo_repo_path"]
         self.max_num_hands = config["mediapipe"]["max_num_hands"]
         self.min_detection_confidence = config['mediapipe']['min_detection_confidence']
-        # self.empty_table = config["empty_table"]
-        names_list = os.listdir(self.filepath)
-        if 'backgrounds' in names_list:
-            names_list.remove('backgrounds')
-        if 'Blank_surface' in names_list:
-            names_list.remove('Blank_surface')
-        if 'processed' in names_list:
-            names_list.remove('processed')
-        if '.gitignore' in names_list:
-            names_list.remove('.gitignore')
-        if 'generated_images' in names_list:
-            names_list.remove('generated_images')
-        self.labels = list()
-        for i in range(len(names_list)):
-            self.labels.append({'id':str(i), 'name': names_list[i]})
+
 
 
     def find_detail_on_photo_yolo(self, yolo_classificator_weigths_path, yolo_repo_path, img_path):
@@ -140,11 +123,33 @@ class HandSegmentor:
         iou = interArea / float(boxAArea + boxBArea - interArea)
         return iou
 
+    
+    def create_yolo_for_validation(self, file_name, points, category_id, dir_name):
+        yolo_width = 4096.0 
+        yolo_height = 2160.0
+        try:
+            os.mkdir(dir_name)
+        except FileExistsError:
+            pass
+        f = open(f'{dir_name}/{file_name}.txt', 'w+')
+        x_min = points[0]
+        x_max = points[1]
+        yolo_x = (x_max + x_min) / (yolo_width * 2)
+        yolo_w = (x_max - x_min) / (yolo_width)
 
-    def preprocessing_with_nn(self, config_dict, filepath, filename, output_dir, empty_table_filepath_to_folder,
-                            empty_table_photo_name, increment_hsStatus, increment, eps=200, show=False, save=True, need_hand=True):
-        image_name = filename[:-4] # +
-        img = cv2.imread(filepath)  # считывание текущего изображения - оставить ли?
+        y_min = points[2]
+        y_max = points[3]
+        yolo_y = (y_max + y_min) / (yolo_height * 2)
+        yolo_h = (y_max - y_min) / (yolo_height)
+        string = f'{category_id} {yolo_x} {yolo_y} {yolo_w} {yolo_h}\n'
+        f.write(string)
+        f.close()
+
+
+    def preprocessing_with_nn(self, config_dict, filepath, filename, output_dir,
+                            increment_hsStatus, increment, eps=200, show=False, save=True, need_hand=True):
+        image_name = filename[:-4] 
+        img = cv2.imread(filepath) 
         img_original = img.copy()
         folder_name_path = output_dir + '{}'.format(image_name)
 
@@ -158,6 +163,16 @@ class HandSegmentor:
             roi = img_original[points[2]:points[3], points[0]:points[1]]
         else:
             return None  
+
+        if config_dict['preprocessing']['make_validation_dataset'] == 1:
+            folder_name = config_dict['preprocessing']['val_folder']
+            directory_name = config_dict['preprocessing']['val_points_folder']
+            img_resized = resize_specific_width_and_height(img, config_dict['preprocessing']['val_width'], config_dict['preprocessing']['val_height'])
+            cv2.imwrite(f'{folder_name}/img_{len(os.listdir(folder_name))}.jpg', img_resized)
+            category_id = self.labels.index(filename[:filename.rfind("_")])
+            print(f'labels: {self.labels}\nfilename: {filename.rfind("_")}\nid:{category_id}\n')
+            self.create_yolo_for_validation(f'img_{len(os.listdir(folder_name))}', points, category_id, directory_name)
+            
         
         try:
             os.makedirs(folder_name_path)
@@ -167,7 +182,6 @@ class HandSegmentor:
         cv2.imwrite(folder_name_path + '/{}.jpg'.format(image_name), img_original)
        
         if config_dict['preprocessing']['roi_indicator']:
-            # print("\nYOUR PATH IS ", folder_name_path + '/{}_roi.jpg'.format(image_name), "\n", roi)
             cv2.imwrite(folder_name_path + '/{}_roi.jpg'.format(image_name), roi)
        
         if config_dict['preprocessing']['hand_indicator']:
@@ -190,7 +204,7 @@ class HandSegmentor:
         else:
             print("Error in paths")
             return
-        img = cv2.imread(raw_photo_path)
+        img = cv2.imread(raw_photo_path) 
         img_original = img.copy()
         imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         mpHands = mp.solutions.hands  # объект класса для распознавания рук на фотографии
@@ -281,119 +295,23 @@ class HandSegmentor:
         cv2.imwrite(folder_name_path + '/{}_detail_on_black_bg.jpg'.format(image_name), np.array(bw_mask))
 
 
-    # def mediapipe_hand_track(self, config_dict, filename, points, roi, eps=200, show=False, save=True):
-    #     """
-    #     Функция обработки изображения для выделения детали и руки и записи в json сгенерированных координат
-    #     :param filepath: абсолютный путь до конкретного файла, например r'/Users/alexsoldatov/Desktop/Датасет_20_деталей_
-    #     по_50_штук/batman/batman_002.jpg'
-    #     :param filename: имя конкретного файла (фото), например "batman_002.jpg"
-    #     :param output_dir: дириктория, куда записываются обработанные фото и json, например
-    #     r'/Users/alexsoldatov/Desktop/Датасет_20_деталей_по_50_штук/processed/'
-    #     :param empty_table_filepath_to_folder: путь до изображения пустого стола
-    #     :param empty_table_photo_name: имя фотографии пустого стола
-    #     :param eps: для вырезания области интереса roi немного с запасом
-    #     :param show: bool, вывод промежуточных сохраняемых результатов на экран
-    #     :param save: bool, необходимость сохранения результатов, включая промежуточные
-    #     :return: None
-    #     """
-
-    #     if config_dict['preprocessing']['hand_indicator']:
-    #         self.getting_hand(config_dict, filename)
-
-    #     if config_dict['preprocessing']['mask_indicator']:
-    #         self.getting_mask(config_dict, filename, roi, points)
-
-
-    def unite_many_jsons(self, directory_path, labels):
-        """
-        Функция, объединяющая json файлы, сгенерированные функцией preprocessing_with_nn в один большой
-        json файл
-        :param directory_path: абсолютный путь до папки с множеством подпапок с json файлами, например,
-        '/Users/alexsoldatov/Desktop/Датасет_20_деталей_по_1000_штук/processed'
-        :param labels: словарь меток классов распознаваемых объектов
-        :return: None (создает json файл в той же папке)
-        """
-        my_dict = {"info": {"description": "my-project-name"},
-                "images": [],
-                "annotations": [],
-                "categories": labels  # Все категории деталей
-                }
-        folder = os.listdir(directory_path)
-        annotations_list, images_list = [], []
-        for i in range(len(folder)):  # записываем в json файл, пробегаясь по всем папкам
-            path = directory_path + '/' + folder[i] + '/'
-            if path[path.rfind('.') + 1:-1] in ['json']:
-                continue
-            for filename in os.listdir(path):
-                if filename[filename.rfind(".") + 1:] in ['json']:
-                    coco = COCO(path + filename)
-                    class_ids = sorted(coco.getCatIds())
-                    anns = coco.loadAnns(coco.getAnnIds(
-                        imgIds=[0], catIds=class_ids, iscrowd=None))
-                    if len(anns) != 2:
-                        continue
-                    annotations_list.append(anns)
-                    images_list.append(coco.loadImgs(ids=[0]))
-                    images_list[len(images_list) - 1][0]['id'] = len(images_list) - 1
-                    annotations_list[len(annotations_list) - 1][0]['id'] = len(annotations_list) - 1
-                    annotations_list[len(annotations_list) - 1][1]['id'] = len(annotations_list) - 1
-                    annotations_list[len(annotations_list) - 1][0]['image_id'] = len(annotations_list) - 1
-                    annotations_list[len(annotations_list) - 1][1]['image_id'] = len(annotations_list) - 1
-        for i in range(len(images_list)):
-            my_dict['images'].append(images_list[i][0])
-            my_dict['annotations'].append(annotations_list[i][0])
-            my_dict['annotations'].append(annotations_list[i][1])
-        with open('pack_of_dets_json.json', "w") as write_file:
-            json.dump(my_dict, write_file)  # переводим словарь в формат json
-
-
-    def delete_files_without_segmentation(self, root_dir_with_dirs):
-        """
-        Функция удаления тех фотографий, которые были удалены из json файла после ручной чистки уже размеченного
-        датасета
-        :param root_dir_with_dirs: путь до копии всех фотографий в одной папке вместе без подпапок, например,
-        r'/Users/alexsoldatov/Desktop/Датасет_20_деталей_по_1000_штук/ALL_imgs_copy(2)/'
-        :return: None
-        """
-        count = 0
-        for filename in os.listdir(root_dir_with_dirs):
-            if filename[filename.rfind(".") + 1:] in ['json']:
-                coco = COCO(root_dir_with_dirs + filename)
-                d = coco.imgs
-            if not d:
-                return
-        for filename in os.listdir(root_dir_with_dirs):
-            if filename[filename.rfind(".") + 1:] in ['jpg', 'png']:
-                for value in list(d.values()):
-                    flag = False
-                    if filename == value['file_name']:
-                        flag = True
-                        break
-                if not flag:
-                    count += 1
-                    os.remove(root_dir_with_dirs + filename)
-
     def check_and_create_directories(self, config_dict):
         if not os.path.exists(config_dict['preprocessing']['processed_folder']):
             os.makedirs(config_dict['preprocessing']['processed_folder'])
 
-    
-    def static_labeling(self, config_dict):
-        return
-
 
     def nn_labeling(self, config_dict, increment_hsStatus):
         photo_num = 0
+        self.labels = sorted(os.listdir(config_dict['1_step']['raw_photos_path']))
         for i in range(len(self.labels)):
-            # my_path = self.root_dir_with_dirs + self.labels[i]["name"] + "/"
-            my_path = config_dict['1_step']['raw_photos_path'] + self.labels[i]["name"] + "/"
+            my_path = config_dict['1_step']['raw_photos_path'] + self.labels[i] + "/"
             try:
                 photo_num += len(os.listdir(my_path))
             except:
                 pass
         increment = 1 / photo_num
         for i in range(len(self.labels)):
-            my_path = self.root_dir_with_dirs + self.labels[i]["name"] + "/"
+            my_path = config_dict['1_step']['raw_photos_path'] + self.labels[i] + "/"
             for filename_batch in self.batch(os.listdir(my_path), os.cpu_count() - active_count()):
                 thread_batch = list()
                 for filename in filename_batch:
@@ -402,9 +320,7 @@ class HandSegmentor:
                         thread_batch.append(Thread(
                                                 target=self.preprocessing_with_nn,
                                                 args=(config_dict, raw_detail_path, filename, 
-                                                config_dict['preprocessing']['processed_folder'],
-                                                self.empty_table_filepath_to_folder_,
-                                                self.empty_table_photo_name_,),
+                                                config_dict['preprocessing']['processed_folder']),
                                                 kwargs={'eps': 100, 'show': False, 'save': True,
                                                 'need_hand': config_dict['preprocessing']['hand_indicator'],
                                                 'increment_hsStatus': increment_hsStatus,
@@ -415,50 +331,6 @@ class HandSegmentor:
                 for thread in thread_batch:
                     thread.join()
                 thread_batch.clear()
-
-    # def mediapipe_and_threshold_methods(self, config_dict, increment_hsStatus):
-    #     photo_num = 0
-    #     for i in range(len(self.labels) - 1):
-    #         my_path = config_dict['1_step']['raw_photos_path'] + self.labels[i]["name"] + "/"
-    #         try:
-    #             photo_num += len(os.listdir(my_path))
-    #         except:
-    #             pass
-    #     increment = 1 / photo_num
-    #     processed_path = config_dict['preprocessing']['processed_folder'] 
-    #     for i in range(len(self.labels) - 1):
-    #         for filename_batch in self.batch(os.listdir(processed_path), os.cpu_count() - active_count()):
-    #             thread_batch = list()
-    #             for filename in filename_batch:
-    #                 if os.path.exists(processed_path + filename + filename + '.png'):
-    #                     raw_photo_path = processed_path + filename + "/" + filename + '.png'
-    #                 else:
-    #                     raw_photo_path = processed_path + filename + "/" + filename + '.jpg'
-
-    #                 for filename in os.listdir(processed_path):
-    #                     # if filename[filename.rfind(".") + 1:] in ['jpg', 'png']:
-    #                     cur_detail_path = processed_path + filename  
-    #                     thread_batch.append(Thread(
-    #                                             target=self.mediapipe_hand_track,
-    #                                             args=(config_dict, raw_photo_path, filename, processed_path,
-    #                                             self.empty_table_filepath_to_folder_,
-    #                                             self.empty_table_photo_name_,),
-    #                                             kwargs={'eps': 100, 'show': False, 'save': True,  # here make 2 flags
-    #                                             'need_hand': config_dict['preprocessing']['hand_indicator'],
-    #                                             'increment_hsStatus': increment_hsStatus,
-    #                                             'increment': increment})
-    #                                         )
-    #             for thread in thread_batch:
-    #                 thread.start()
-    #             for thread in thread_batch:
-    #                 thread.join()
-    #             thread_batch.clear()
-
-        # папка со сгенерированными json файлами
-        # self.unite_many_jsons(self.processed_dir, self.labels)
-        #unite_many_jsons_condition(test_dir, all_imgs_in_one_dir_together, labels)
-        #delete_files_without_segmentation(all_imgs_in_one_dir_together)
-
 
 
     def main_job(self, signal: Signal, increment_hsStatus: Function, config_dict) -> None:
@@ -472,12 +344,10 @@ class HandSegmentor:
         '''
         # DIRS
         self.check_and_create_directories(config_dict)
+        config_dict['name_list'] = os.listdir(config_dict['1_step']['raw_photos_path'])
 
         # ROI-getting:
-        if config_dict['preprocessing']['static_indicator']:
-            self.static_labeling(config_dict, increment_hsStatus)
-        else:
-            self.nn_labeling(config_dict, increment_hsStatus)
+        self.nn_labeling(config_dict, increment_hsStatus)
             
         signal.emit()
 

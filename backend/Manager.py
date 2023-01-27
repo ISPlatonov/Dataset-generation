@@ -2,13 +2,11 @@ import json
 import os
 from threading import Thread
 from time import sleep
-from locale import atof  # , setlocale, LC_NUMERIC
-# setlocale(LC_NUMERIC, 'French_Canada.1252')
+from locale import atof 
 
 from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from backend.HandSegmentor import HandSegmentor
-from backend.BackgroundImposing.filtration import Filtration
 from backend.BackgroundImposing.generation_backs import BacksGeneration
 
 
@@ -39,6 +37,7 @@ class Manager(QObject):
     backgroundsPathChanged = Signal()
     rawPhotosPathChanged = Signal()
     generatedPathChanged = Signal()
+    snapshotDelayChanged = Signal()
     photoNumChanged = Signal()
     backsGenerationPercentChanged = Signal()
     cameraNumChanged = Signal()
@@ -65,13 +64,13 @@ class Manager(QObject):
         # For 1 step:
         self._snapshots_number = self._config['snapshots']['snapshots_number']
         self._raw_photos_path = self._config['1_step']['raw_photos_path']
+        self._snapshot_delay = self._config['snapshots']['snapshot_delay']
         
         # For the 2 step:
         self._processed_path = self._config['preprocessing']['processed_folder']
         self._roi_indicator = self._config['preprocessing']['roi_indicator'] 
         self._mask_indicator = self._config['preprocessing']['mask_indicator'] 
         self._hand_indicator = self._config['preprocessing']['hand_indicator']
-        self._static_indicator = self._config['preprocessing']['static_indicator']
 
         # For the 3 step:
         self._backgrounds_path = self._config['generation_backs']['backgrounds']
@@ -80,30 +79,28 @@ class Manager(QObject):
         # Others:
         self._name_list = self._config['name_list']
         self.nameListChanged.emit()
-        self._images_path = self._config['images_path']
+        self._images_path = self._config['1_step']['raw_photos_path']
         self.imagesPathChanged.emit()   # зачем?  good taste?
         self.emptyTablePathChanged.emit()
         
 
         self.hs = HandSegmentor(self._config)
-        self.filter = Filtration(self._config)
         self.bg = BacksGeneration(self._config)
 
         self._iou = self._config['generation_backs']['iou']
         self._max_hands_on_photo = self._config['generation_backs']['max_hands_on_photo']
-        self._rectangle_indicator = self._config['generation_backs']['rectangle_indicator']  # True
+        self._rectangle_indicator = self._config['generation_backs']['rectangle_indicator']
         self._max_details_on_photo = self._config['generation_backs']['max_details_on_photo']
         self._backsGenerationPercent = 0.
         self._camera_num = self._config["camera_num"]
         self._hsStatus = 0
         if not os.path.exists(self._processed_path):
             os.mkdir(self._processed_path)
-        self._number_of_masks = self.count_masks() #len(os.listdir(self._processed_path))  # dodelat!
-        self.get_mask_folders()  # плохо что считается при запусkе а надо при переходе на третий этап
+        self._number_of_masks = self.count_masks() 
+        self.get_mask_folders() 
         self.get_hand_folders()
 
-        self._photo_num = int(self._number_of_masks * 4 / self._max_details_on_photo)  # self._config['generation_backs']['photo_num']   # do i need to add signal.emit?
-
+        self._photo_num = int(self._number_of_masks * 4 / (self._max_details_on_photo / 2))  
         if not os.path.exists(self._images_path):
             os.mkdir(self._images_path)
 
@@ -135,7 +132,6 @@ class Manager(QObject):
     def get_hand_folders(self):
         self._config['generation_backs']['all_hand_folders'] = []
         for dir in os.listdir(self._processed_path):
-            # print("\ntttt", (self._processed_path + "/" + dir + "/" + dir + "_continious_hand_bw_mask.jpg"), "\n")
             if os.path.exists(self._processed_path + dir + "/" + dir + "_continious_hand_bw_mask.jpg"):
                 self._config['generation_backs']['all_hand_folders'].append(dir)
         return self._config['generation_backs']['all_hand_folders']
@@ -255,12 +251,6 @@ class Manager(QObject):
 
 
     @Slot()
-    def filtration(self):
-        '''Call filtration'''
-        self.filter.main_job()
-
-
-    @Slot()
     def backsGenerationStep(self):
         '''Emits backsGenerationPercentChanged signal'''
         for percent in self.bg.main_job(self._config):
@@ -298,6 +288,17 @@ class Manager(QObject):
 
     def __get_raw_photos_path(self):
         return self._raw_photos_path
+
+    
+    @Slot("QVariant")
+    def __set_snapshot_delay(self, snapshot_delay):
+        snapshot_delay = snapshot_delay.replace(',', '.')
+        self._snapshot_delay = atof(snapshot_delay)
+        self._config['snapshots']['snapshot_delay'] = self._snapshot_delay
+        self.snapshotDelayChanged.emit()
+
+    def __get_snapshot_delay(self):
+        return self._snapshot_delay
 
 
     # For 2 step:
@@ -343,16 +344,6 @@ class Manager(QObject):
 
     def __get_hand_indicator(self):
         return self._hand_indicator
-
-
-    @Slot("QVariant")
-    def __set_static_indicator(self, static_indicator: int):
-        self._static_indicator = static_indicator
-        self.staticIndicatorChanged.emit()
-
-
-    def __get_static_indicator(self):
-        return self._static_indicator
 
 
     # For 3 step:
@@ -488,11 +479,17 @@ class Manager(QObject):
                                          fset=__set_config,
                                          notify=configChanged)
 
-    # for 1 step:                               
+    # For 1 step:                               
     snapshots_number =          Property("QVariant",
                                          fget=__get_snapshots_number,
                                          fset=__set_snapshots_number,
                                          notify=snapshotsNumberChanged)
+    
+
+    snapshots_delay =                       Property("QVariant",
+                                         fget=__get_snapshot_delay,
+                                         fset=__set_snapshot_delay,
+                                         notify=snapshotDelayChanged)
 
     # For 2 step
     mask_indicator =            Property("QVariant",
@@ -513,12 +510,7 @@ class Manager(QObject):
     hand_indicator =            Property("QVariant",
                                          fget=__get_hand_indicator,
                                          fset=__set_hand_indicator,
-                                         notify=handIndicatorChanged)
-
-    static_indicator =          Property("QVariant",
-                                         fget=__get_static_indicator,
-                                         fset=__set_static_indicator,
-                                         notify=staticIndicatorChanged)                                      
+                                         notify=handIndicatorChanged)                                   
                                          
     # For 3 step
     backgrounds_path =          Property("QVariant",
