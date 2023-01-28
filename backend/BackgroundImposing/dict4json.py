@@ -181,13 +181,8 @@ class Dict4Json:
         :param a: int - количество деталей на изображении
         :return:
         """
-        dir_name = 'yolo_points'
-        yolo_width = self.generated_backs['width'] #4096.0 #TODO: ADD TO CONFIG AND CHANGE CONSTANT
-        yolo_height = self.generated_backs['height'] # 2160.0 #TODO: ADD TO CONFIG AND CHANGE CONSTANT
-        try:
-            os.mkdir(dir_name)
-        except FileExistsError:
-            pass
+        yolo_width = self.generated_backs['width']
+        yolo_height = self.generated_backs['height']
         f = open(f'{dir_name}/{file_name}.txt', 'w+')
         for i in range(details_number):
             x_min = d["annotations"][i]["yolo"][0]
@@ -203,4 +198,3 @@ class Dict4Json:
             string = f'{d["annotations"][i]["category_id"]} {yolo_x} {yolo_y} {yolo_w} {yolo_h}\n'
             f.write(string)
         f.close()
-
