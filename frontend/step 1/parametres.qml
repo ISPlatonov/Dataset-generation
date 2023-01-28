@@ -39,16 +39,9 @@ Item {
         }
         TextField {
             id: raw_photos_path
-            Layout.columnSpan: 2
+            Layout.columnSpan: 3
             Layout.minimumWidth: 270
             text: manager.raw_photos_path
-        }
-        Button {
-            text: "Изменить"
-            height: manager.config.graphics.unit_height
-            onClicked: {
-                fileDialog.open()
-            }
         }
         Rectangle {
             color: 'transparent'

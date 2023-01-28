@@ -28,7 +28,6 @@ Item {
         step1camera.i++;
     }
 
-
     ColumnLayout {
         anchors.horizontalCenter: parent.horizontalCenter
         Text {
@@ -82,18 +81,16 @@ Item {
         }
     }
 
-
     VideoOutput {
         id: videoOutput
         anchors.fill: parent
         focus : visible
     }
 
-
     Button {
         id: button1
-        text: qsTr("Сделать фотографии")
-        width: (parent.width / 6)
+        text: qsTr("Фотосъемка")
+        width: (parent.width / 3)
         anchors.margins: 20
         anchors.bottom: parent.bottom
         anchors.right: parent.right
@@ -103,11 +100,10 @@ Item {
         }
     }
 
-
     Button {
         id: buttonMid
         text: qsTr("Одно фото")
-        width: (parent.width / 6)
+        width: (parent.width / 3)
         anchors.margins: 20
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
@@ -120,7 +116,7 @@ Item {
     Button {
         id: button2
         text: qsTr("Назад")
-        width: (parent.width / 6)
+        width: (parent.width / 3)
         anchors.margins: 20
         anchors.left: parent.left
         anchors.bottom: parent.bottom

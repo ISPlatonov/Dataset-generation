@@ -94,7 +94,7 @@ Item {
             Layout.preferredHeight: 40
             Text {
                 x: 5
-                text: "Максимальный IoU между\nпересекающимися объектами (от 0 до 1)"
+                text: "Максимальный IoU между\nпересекающимися объектами"
             }
         }
         Rectangle {
@@ -121,7 +121,6 @@ Item {
                     }
                     previousText = text
                     var numericValue = getValue()
-                    // text = Number(previousText)
                     manager.iou = text // Number(previousText)
                     console.log("iou = " + text)
                 }
@@ -202,9 +201,6 @@ Item {
         onClicked: { 
             step3photo_num.gotoGeneration(); 
             console.log("iou === ", manager.iou);
-            // console.log("1 = ", hand_check.checkState);
-            // manager.hand_indicator = hand_check.checkState != 0 ? 1 : 0;
-            // console.log("hand = ", manager.hand_indicator);
             manager.rectangle_indicator = rectangle_check.checkState != 0 ? 1 : 0;
             console.log("rectangle = ", manager.rectangle_indicator);
             manager.photo_num = parseInt(photo_num_field.text);

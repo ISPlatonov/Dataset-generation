@@ -29,7 +29,7 @@ Item {
     Button {
         id: button2
         text: qsTr("Назад")
-        width: (parent.width / 6)
+        width: (parent.width / 3)
         anchors.margins: 20
         anchors.left: parent.left
         anchors.bottom: parent.bottom
@@ -37,7 +37,7 @@ Item {
     }
      Button {
         text: qsTr("На следующий этап")
-        width: (parent.width / 6)
+        width: (parent.width / 3)
         anchors.margins: 20
         anchors.right: parent.right
         anchors.bottom: parent.bottom

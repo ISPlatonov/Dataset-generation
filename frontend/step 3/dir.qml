@@ -39,17 +39,10 @@ Item {
         }
         TextField {
             id: processed_field
-            Layout.columnSpan: 2
+            Layout.columnSpan: 3
             Layout.minimumWidth: 270
             // Layout.maximumWidth: 670
             text: manager.processed_path
-        }
-        Button {
-            text: "Изменить"
-            height: manager.config.graphics.unit_height
-            onClicked: {
-                fileDialog.open()
-            }
         }
         Rectangle {
             color: 'transparent'
@@ -63,18 +56,9 @@ Item {
         }
         TextField {
             id: back_field
-            Layout.columnSpan: 2
+            Layout.columnSpan: 3
             Layout.minimumWidth: 270
             text: manager.backgrounds_path
-        }
-        Button {
-            text: qsTr("Изменить")
-            height: manager.config.graphics.unit_height
-            // anchors.verticalCenter: text_field2.verticalCenter
-            // Layout.alignment: Qt.AlignVCenter
-            onClicked: {
-                fileDialog.open()
-            }
         }
         Rectangle {
             color: 'transparent'
@@ -83,23 +67,14 @@ Item {
             Layout.columnSpan: 3
             Text {
                 anchors.centerIn: parent
-                text: "Папка для новых сгенерированных фотографий"
+                text: "Папка для новых фотографий"
             }
         }
         TextField {
             id: generated_field
-            Layout.columnSpan: 2
+            Layout.columnSpan: 3
             Layout.minimumWidth: 270
             text: manager.generated_path
-        }
-        Button {
-            Layout.fillHeight: true
-
-            text: qsTr("Изменить")
-            height: manager.config.graphics.unit_height
-            onClicked: {
-                fileDialog.open()
-            }
         }
     }
     Button {

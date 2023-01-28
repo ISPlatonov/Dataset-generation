@@ -29,24 +29,16 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         Button {
-            // llbe fixed later
-            id: button0
-            text: qsTr("Загрузить список деталей")
-            width: (parent.width / 3)
-            height: parent.height
-            onClicked: listDialog.open()
-        }
-        Button {
             id: button1
             text: qsTr("Добавить новую деталь")
-            width: (parent.width / 3)
+            width: (parent.width / 2)
             height: parent.height
             onClicked: manager.addName("")
         }
         Button {
             id: button2
             text: qsTr("Удалить деталь")
-            width: (parent.width / 3)
+            width: (parent.width / 2)
             height: parent.height
             onClicked: {
                 console.log("removing " + manager.name_list[focusedItemIndex] + " on index " + focusedItemIndex)
