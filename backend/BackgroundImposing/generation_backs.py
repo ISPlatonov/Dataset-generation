@@ -269,9 +269,9 @@ class BacksGeneration(Dict4Json):
         
         # for id in range(number_of_used_masks):
         while position < number_of_used_masks:
-
             square = 0  # square of overlayed details
             name_back = backgrounds + '/' + random.choice(os.listdir(backgrounds))
+            #print(f'background is {name_back}')
             background = resize_specific_width_and_height(cv2.imread(name_back), self.width, self.height)
             img = background
             masks_array = np.zeros((self.height * self.width * 20)).reshape((self.height, self.width, 20))
@@ -299,10 +299,10 @@ class BacksGeneration(Dict4Json):
                     detail_image = rotation(detail_image, (masks_index_list[position] % 4) * 90)
                     mask_image = rotation(mask_image, (masks_index_list[position] % 4) * 90)
                     position += 1
-                    if position == number_of_used_masks:
-                        number_of_details_on_photo = detail_num
-                        id = photo_num
-                        break
+                    # if position == number_of_used_masks:
+                    #     number_of_details_on_photo = detail_num
+                    #     id = photo_num
+                    #     break
                 vf = int(random.uniform(0, 2))
                 hf = int(random.uniform(0, 2))
                 vf = int(random.uniform(0, 2))

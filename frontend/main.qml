@@ -5,6 +5,8 @@ import QtQuick.Dialogs
 import QtQml
 import QtQuick.Layouts
 import QtMultimedia
+import QtQuick.Controls.Material
+
 
 import "."
 // import "textfielddoublevalidator.h"

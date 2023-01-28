@@ -8,6 +8,7 @@ class Dict4Json:
     def __init__(self, config):
         self.processed_path = config['preprocessing']['processed_folder']
         self.all_details_names = config['name_list']
+        self.generated_backs = config['generation_backs']
         self.backgrounds = config['generation_backs']['backgrounds']
         self.generated_images = config['generation_backs']['generation_folder']
         self.names_to_category_id_dict = dict()
@@ -180,8 +181,13 @@ class Dict4Json:
         :param a: int - количество деталей на изображении
         :return:
         """
-        yolo_width = 4096.0 
-        yolo_height = 2160.0 
+        dir_name = 'yolo_points'
+        yolo_width = self.generated_backs['width'] #4096.0 #TODO: ADD TO CONFIG AND CHANGE CONSTANT
+        yolo_height = self.generated_backs['height'] # 2160.0 #TODO: ADD TO CONFIG AND CHANGE CONSTANT
+        try:
+            os.mkdir(dir_name)
+        except FileExistsError:
+            pass
         f = open(f'{dir_name}/{file_name}.txt', 'w+')
         for i in range(details_number):
             x_min = d["annotations"][i]["yolo"][0]

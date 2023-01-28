@@ -152,7 +152,6 @@ class HandSegmentor:
         img = cv2.imread(filepath) 
         img_original = img.copy()
         folder_name_path = output_dir + '{}'.format(image_name)
-
         points = self.find_detail_on_photo_yolo(self.yolo_classificator_weigths_path, 
                                                                self.yolo_repo_path, 
                                                                filepath)
@@ -178,21 +177,16 @@ class HandSegmentor:
             os.makedirs(folder_name_path)
         except OSError as e:
             pass
-
         cv2.imwrite(folder_name_path + '/{}.jpg'.format(image_name), img_original)
-       
         if config_dict['preprocessing']['roi_indicator']:
             cv2.imwrite(folder_name_path + '/{}_roi.jpg'.format(image_name), roi)
-       
         if config_dict['preprocessing']['hand_indicator']:
             self.getting_hand(config_dict, filename)
-
         if config_dict['preprocessing']['mask_indicator']:
             self.getting_mask(config_dict, filename, roi, points)
-
-
         increment_hsStatus(increment)
         return points
+
 
     def getting_hand(self, config_dict, filename):
         image_name = filename[:-4]
