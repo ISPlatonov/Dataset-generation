@@ -16,7 +16,6 @@ from backend.BackgroundImposing.augmentations import *
 import torch
 import pandas as pd
 
-
 class HandSegmentor:
 
     def __init__(self, config: dict):
@@ -27,7 +26,6 @@ class HandSegmentor:
         self.yolo_repo_path = config["yolo_repo_path"]
         self.max_num_hands = config["mediapipe"]["max_num_hands"]
         self.min_detection_confidence = config['mediapipe']['min_detection_confidence']
-
 
 
     def find_detail_on_photo_yolo(self, yolo_classificator_weigths_path, yolo_repo_path, img_path):
@@ -152,6 +150,7 @@ class HandSegmentor:
         img = cv2.imread(filepath) 
         img_original = img.copy()
         folder_name_path = output_dir + '{}'.format(image_name)
+
         points = self.find_detail_on_photo_yolo(self.yolo_classificator_weigths_path, 
                                                                self.yolo_repo_path, 
                                                                filepath)
@@ -159,10 +158,19 @@ class HandSegmentor:
             if (abs(points[0] - points[1]) > img_original.shape[1] / 2) or \
                 (abs(points[2] - points[3]) > img_original.shape[0] / 2):
                 return None
+            
+            if (abs(points[0] - points[1]) < img_original.shape[1] / 10) and \
+                (abs(points[2] - points[3]) < img_original.shape[0] / 10):
+                return None
+
             roi = img_original[points[2]:points[3], points[0]:points[1]]
         else:
             return None  
-
+        
+        try:
+            os.makedirs(folder_name_path)
+        except OSError as e:
+            pass
         if config_dict['preprocessing']['make_validation_dataset'] == 1:
             folder_name = config_dict['preprocessing']['val_folder']
             directory_name = config_dict['preprocessing']['val_points_folder']
@@ -170,23 +178,25 @@ class HandSegmentor:
             cv2.imwrite(f'{folder_name}/img_{len(os.listdir(folder_name))}.jpg', img_resized)
             category_id = self.labels.index(filename[:filename.rfind("_")])
             print(f'labels: {self.labels}\nfilename: {filename.rfind("_")}\nid:{category_id}\n')
+            print(f'\n\npoints {points}\n\n')
             self.create_yolo_for_validation(f'img_{len(os.listdir(folder_name))}', points, category_id, directory_name)
             
-        
-        try:
-            os.makedirs(folder_name_path)
-        except OSError as e:
-            pass
+
+
         cv2.imwrite(folder_name_path + '/{}.jpg'.format(image_name), img_original)
+       
         if config_dict['preprocessing']['roi_indicator']:
             cv2.imwrite(folder_name_path + '/{}_roi.jpg'.format(image_name), roi)
+       
         if config_dict['preprocessing']['hand_indicator']:
             self.getting_hand(config_dict, filename)
+
         if config_dict['preprocessing']['mask_indicator']:
             self.getting_mask(config_dict, filename, roi, points)
+
+
         increment_hsStatus(increment)
         return points
-
 
     def getting_hand(self, config_dict, filename):
         image_name = filename[:-4]

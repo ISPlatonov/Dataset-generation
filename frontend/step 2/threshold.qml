@@ -19,10 +19,17 @@ Item {
             text: qsTr("Генерация масок")
         }
         Button {
+            id: button1
             text: qsTr("Запустить")
             onClicked: {
-                manager.handSegmentor()
+            manager.handSegmentor()
+            button1.enabled = false
+            button2.enabled = false
+            button3.enabled = false
             }
+        }
+        ProgressBar {
+            value: manager.hsStatus
         }
     }
     
@@ -36,6 +43,7 @@ Item {
         onClicked: step2threshold.gotoStep2()
     }
      Button {
+        id: button3
         text: qsTr("На следующий этап")
         width: (parent.width / 3)
         anchors.margins: 20
@@ -46,5 +54,11 @@ Item {
     Loader {
         id: thresholdloader
         anchors.fill: parent
+    }
+    Connections {
+        target: manager
+        onHsEnded: {
+            gotoStep3()
+        }
     }
 }
