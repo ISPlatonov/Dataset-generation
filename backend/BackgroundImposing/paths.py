@@ -2,29 +2,21 @@ import random
 import os
 
 
-def get_detail_path(detail_name, back_directory):
+def get_detail_path_by_rect(detail_name, back_directory):
     """
     Функция генерации имени файла с изображением и его маски.
     """
     detail_folder = random.choice([x for x in os.listdir(back_directory) if x.find(detail_name) != -1])
     name = back_directory + '/' + detail_folder + '/' + detail_folder
-    return f'{name}_roi.jpg', f'{name}_roi.jpg' 
+    return f'{name}_roi.jpg'
 
-def get_shuffle_detail_path(i_mask, all_masks_folders, back_directory):
-    i = int(i_mask / 4)
-    name = back_directory + all_masks_folders[i] + '/' + all_masks_folders[i]
-    detail_name = all_masks_folders[i][:all_masks_folders[i].rfind('_')]
-    # rotation
-    return f'{name}_roi.jpg', detail_name
-
-def get_hand_path(i, all_hand_folders, back_directory):
+def get_detail_path_by_mask(back_directory, detail_name):
     """
-        Функция генерации имени файла с изображением руки и его маски.
-        :param detail: str
-        :return: str
+    Функция генерации имени файла с изображением и его маски.
     """
-    name = back_directory + all_hand_folders[i] + '/' + all_hand_folders[i]
-    return f'{name}_hand_on_black_back.jpg', f'{name}_continious_hand_bw_mask.jpg'
+    detail_folder = detail_name  #random.choice(os.listdir(back_directory))
+    name = back_directory + '/' + detail_folder + '/' + detail_folder
+    return f'{name}_detail_on_black_bg.jpg', f'{name}_detail_bw_mask.jpg'
 
 def get_dst_path(back_directory):
     """

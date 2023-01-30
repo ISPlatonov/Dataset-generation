@@ -54,10 +54,6 @@ class BacksGeneration(Dict4Json):
             approx = cv2.approxPolyDP(c, 0.005 * peri, True)  # Чем коэффициент перед peri больше, тем больше "сравнивание" границ.
                                                             # При 0.15 уже может получится квадрат из исходного множества
                                                             # точек, аппроксимирующих шестеренку, в cnts.
-        area = black_and_white_mask.shape[0] * black_and_white_mask.shape[1]
-        if cv2.contourArea(approx) / area > 0.23 and detail_name != "hand":
-            print(f'The area of contours is {cv2.contourArea(approx) / area}')
-            return np.nan
         return approx
 
 
@@ -75,12 +71,11 @@ class BacksGeneration(Dict4Json):
         """
         if (detail_num < 1):
             background1 = resize_specific_width_and_height(background1, self.width, self.height)
-        background1, gt = self.adding_img_on_background(img, mask_gray, detail_name, background1, sdvig_x, sdvig_y, rect)
+        background1, gt = self.add_object_on_background_by_rect(img, mask_gray, background1, sdvig_x, sdvig_y)
         return background1, gt
 
 
-
-    def adding_img_on_background(self, img, mask_gray, detail_name, background, sdvig_x, sdvig_y, rect):
+    def add_object_on_background_by_mask(self, img, mask_gray, background, sdvig_x, sdvig_y, rect):
         """
         Функция отрисовки новой детали на фоне.
         :param img: array
@@ -90,19 +85,29 @@ class BacksGeneration(Dict4Json):
         :param sdvig_y: int
         :return: array, array
         """ 
-        prev_mask = np.zeros((self.height, self.width))   
-        if detail_name == "hand":
-           for i in range(int(rect[0]), int(rect[2])):
-                for j in range(int(rect[1]), int(rect[3])):
-                    if mask_gray[i - sdvig_y][j - sdvig_x] > 250:
-                        background[i][j] = img[i - sdvig_y][j - sdvig_x]
-                        prev_mask[i][j] = mask_gray[i - sdvig_y][j - sdvig_x]
-        else:
-            for i in range(img.shape[0]):
-                for j in range(img.shape[1]):
-                    background[i + sdvig_y][j + sdvig_x] = img[i][j] 
-                    prev_mask[i + sdvig_y][j + sdvig_x] = 255
-        return background, prev_mask
+        cur_mask = self.get_mask(mask_gray, sdvig_x, sdvig_y)
+        for i in range(int(rect[1]), int(rect[3])):
+            for j in range(int(rect[0]), int(rect[2])):
+                if mask_gray[i - sdvig_y][j - sdvig_x] > 250:
+                    background[i][j] = img[i - sdvig_y][j - sdvig_x]
+        return background, cur_mask
+
+
+    def add_object_on_background_by_rect(self, img, mask_gray, background, sdvig_x, sdvig_y):
+        """
+        Функция отрисовки новой детали на фоне.
+        :param img: array
+        :param mask_gray: array
+        :param background: array
+        :param sdvig_x: int
+        :param sdvig_y: int
+        :return: array, array
+        """ 
+        cur_mask = self.get_mask(mask_gray, sdvig_x, sdvig_y)
+        for i in range(img.shape[0]):
+            for j in range(img.shape[1]):
+                background[i + sdvig_y][j + sdvig_x] = img[i][j] 
+        return background, cur_mask
 
     def get_mask(self, mask_gray, sdvig_x, sdvig_y):
         """
@@ -153,23 +158,8 @@ class BacksGeneration(Dict4Json):
         return flag
 
 
-    def add_detail_on_background(self, img, mask_gray, detail_name, background, sdvig_x, sdvig_y, rect):
-        """
-        Добавление детали на фон.
-        :param img: array
-        :param mask_gray: array
-        :param background: array
-        :param sdvig_x: int
-        :param sdvig_y: int
-        :return: array, array
-        """
-        cur_mask = self.get_mask(mask_gray, sdvig_x, sdvig_y)
-        background, _ = self.adding_img_on_background(img, mask_gray, detail_name, background, sdvig_x, sdvig_y, rect)
-        return background, cur_mask
-
-
     def generate_new_photo(self, detail_num, id, detail_name, img, detail, mask, background, masks_array,
-                            count, d, square, config_dict, vert_flip=0, horiz_flip=0, rot=0):
+                            count, d, square, config_dict):
         """
         Генерация нового изображения
         :param detail_num: int - номер (порядок) детали среди всех, нанесенных на изображение с этим id
@@ -188,23 +178,12 @@ class BacksGeneration(Dict4Json):
         :return: array, array, dictionary, int
         """
         mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-        rot = 0
-
-        if detail_name == "hand":
-            detail, mask = apply_augmentations(detail, mask, vert_flip, horiz_flip, rot=rot)
-            
-            approx = self.get_approx(mask, detail_name)
-            if approx is np.nan:
-                print("Approx is empty")
-                return img, masks_array, d, detail_num, square
-            yolo_points = self.get_yolo_points(approx)
-        else:
-            yolo_points = [0, 0, mask.shape[0], mask.shape[1]]  
-        
+        yolo_points = [0, 0, mask.shape[0], mask.shape[1]]  
         sdvig_x, sdvig_y = self.get_shifts(img, mask)
         rect = [yolo_points[0] + sdvig_y, yolo_points[1] + sdvig_x, yolo_points[2] + sdvig_y, yolo_points[3] + sdvig_x]
         rect_for_iou = [yolo_points[1] + sdvig_x, yolo_points[0] + sdvig_y, yolo_points[3] + sdvig_x, yolo_points[2] + sdvig_y] 
         square += (yolo_points[2] - yolo_points[0]) * (yolo_points[3] - yolo_points[1])
+
         if detail_num == 0:
             d = self.writing_in_json(detail_num, img, detail_name, id, rect, count, d, self.all_details_names, config_dict)
             img, masks_array[:, :, 0] = self.generate_new_background(detail_num, detail_name, detail, mask, background, sdvig_x, sdvig_y, rect)
@@ -212,17 +191,68 @@ class BacksGeneration(Dict4Json):
             flag = self.check_iou(d, rect_for_iou, detail_num)
             if flag == 1:
                 d = self.writing_in_json(detail_num, img, detail_name, id, rect, count, d, self.all_details_names, config_dict)
-                img, masks_array[:, :, detail_num] = self.add_detail_on_background(detail, mask, detail_name, img, sdvig_x, sdvig_y, rect)
+                img, masks_array[:, :, detail_num] = self.add_object_on_background_by_rect(detail, mask, img, sdvig_x, sdvig_y)
             else:
                 return img, masks_array, d, detail_num, square
         return img, masks_array, d, detail_num + 1, square
 
 
+    def apply_augmentations(self, detail, mask, vert_flip=True, horiz_flip=True, rot=True, scale=True):
+        if vert_flip:
+            vf = int(random.uniform(0, 2))
+            detail = vertical_flip(detail, vf)
+            mask = vertical_flip(mask, vf)
+        if horiz_flip:
+            hf = int(random.uniform(0, 2))
+            detail = horizontal_flip(detail, hf)
+            mask = horizontal_flip(mask, hf)
+        if rotation:
+            if self.rectangle_indicator:
+                angle = int(random.uniform(0, 4)) * 90
+                detail = rotation90(detail, angle)
+                mask = rotation90(mask, angle)
+            else:
+                angle = int(random.uniform(0, 360))
+                detail = rotation(detail, angle)
+                mask = rotation(mask, angle)
+        if scale:
+            proportion = float(random.uniform(self.min_scaling, self.max_scaling))
+            print(f'proportion {proportion}')
+            detail = scale_image_in_percent(detail, proportion)
+            mask = scale_image_in_percent(mask, proportion)
+
+        return detail, mask
+        
     def check_and_create_directories(self, config_dict):
         if not os.path.exists(config_dict['generation_backs']['generation_folder']):
             os.makedirs(config_dict['generation_backs']['generation_folder'])
         if not os.path.exists(config_dict['generation_backs']['yolo_folder']):
             os.makedirs(config_dict['generation_backs']['yolo_folder'])
+
+    
+    def define_names(self, config_dict):
+        self.processed_path = config_dict['preprocessing']['processed_folder']
+        self.backgrounds = config_dict['generation_backs']['backgrounds']
+        self.iou = config_dict['generation_backs']['iou']
+        self.photo_num = int(config_dict['generation_backs']['photo_num'])
+        self.generation_folder = config_dict['generation_backs']['generation_folder']
+        self.yolo_folder = config_dict["generation_backs"]["yolo_folder"]
+        self.max_details_on_photo = config_dict['generation_backs']['max_details_on_photo']
+        self.min_scaling = config_dict['generation_backs']['min_scaling']
+        self.max_scaling = config_dict['generation_backs']['max_scaling']
+        self.max_square = self.height * self.width
+        self.rectangle_indicator = config_dict['generation_backs']['rectangle_indicator']
+
+        lst = sorted(os.listdir(self.processed_path))
+        self.all_details_names = sorted(list(set(lst[i][:lst[i].rfind('_')] for i in range(len(lst)))))
+        config_dict['name_list'] = self.all_details_names
+        self.define_dict_for_yolo(config_dict)
+        self.number_of_used_masks = config_dict['generation_backs']['number_of_masks']
+        if config_dict['generation_backs']['rectangle_indicator'] != 1:
+            self.number_of_used_masks = self.photo_num * self.max_details_on_photo
+        
+
+
 
 
     def main_job(self, config_dict): # -> Generator[float, None, None]:
@@ -235,87 +265,35 @@ class BacksGeneration(Dict4Json):
             float: percentage of the job done
         '''
         self.check_and_create_directories(config_dict)
-        backgrounds = config_dict['generation_backs']['backgrounds']
-        self.iou = config_dict['generation_backs']['iou']
-        photo_num = int(config_dict['generation_backs']['photo_num'])
-        generation_folder = config_dict['generation_backs']['generation_folder']
-        processed_path = config_dict['preprocessing']['processed_folder']
-        max_details_on_photo = config_dict['generation_backs']['max_details_on_photo']
-        max_hands_on_photo = config_dict['generation_backs']['max_hands_on_photo']
-
-        lst = sorted(os.listdir(processed_path))
-        all_details_names = sorted(list(set(lst[i][:lst[i].rfind('_')] for i in range(len(lst)))))
-        config_dict['name_list'] = all_details_names
-        self.all_details_names = all_details_names
-        self.define_dict_for_yolo(config_dict)
-        print(f'\n\nnames: {config_dict["name_list"]}\n\n')
-        number_of_used_masks = config_dict['generation_backs']['number_of_masks']
-        number_of_hand_masks = config_dict['generation_backs']['number_of_hand_masks']
-        if config_dict['generation_backs']['rectangle_indicator'] != 1:
-            number_of_used_masks = photo_num * max_details_on_photo
-        
-        all_mask_folders = config_dict['generation_backs']['all_mask_folders'] 
-        all_hand_folders = config_dict['generation_backs']['all_hand_folders']
-
-        masks_index_list = np.arange(len(all_mask_folders))
-        hand_index_list = np.arange(len(all_hand_folders))
-
-        random.shuffle(masks_index_list)
-        position = 0
-        hand_position = 0
-
-        max_square = self.height * self.width
+        self.define_names(config_dict)
         id = 0
-        
-        # for id in range(number_of_used_masks):
-        while position < number_of_used_masks and id < photo_num:
+        while id < self.photo_num:
             square = 0  # square of overlayed details
-            name_back = backgrounds + '/' + random.choice(os.listdir(backgrounds))
-            background = resize_specific_width_and_height(cv2.imread(name_back), self.width, self.height)
+            name_back = self.backgrounds + '/' + random.choice(os.listdir(self.backgrounds))
+            background = cv2.imread(name_back)
+            background = resize_specific_width_and_height(background, self.width, self.height)
             img = background
             masks_array = np.zeros((self.height * self.width * 20)).reshape((self.height, self.width, 20))
-            number_of_details_on_photo = int(random.uniform(1, max_details_on_photo))
+            number_of_details_on_photo = int(random.uniform(1, self.max_details_on_photo) + 1)
             detail_num = 0
-            current_number_of_hands_on_photo = 0
-            while detail_num < number_of_details_on_photo and square < max_square:
+            while detail_num < number_of_details_on_photo and square < self.max_square:
                 if detail_num == 0:
                     d = {}
-                j = int(random.uniform(0, len(all_details_names)))  # номер детали из комплекта
-                detail_name = all_details_names[j]
-                if detail_name == "hand" and current_number_of_hands_on_photo < max_hands_on_photo:
-                    detail_path, mask_path = get_hand_path(hand_index_list[hand_position], all_hand_folders, processed_path)
-                    hand_position += 1
-                    detail_image = cv2.imread(detail_path) 
-                    mask_image = cv2.imread(mask_path)
-                    detail_image = scale_image_in_percent(detail_image, 3)
-                    mask_image = scale_image_in_percent(mask_image, 3)
-                    current_number_of_hands_on_photo += 1
-                else:
-                    detail_path, detail_name = get_shuffle_detail_path(masks_index_list[position], all_mask_folders, processed_path)
-                    detail_image, mask_image = cv2.imread(detail_path), cv2.imread(detail_path)
-                    detail_image = scale_image_in_percent(detail_image, 3)
-                    mask_image = scale_image_in_percent(mask_image, 3)
-                    detail_image = rotation(detail_image, (masks_index_list[position] % 4) * 90)
-                    mask_image = rotation(mask_image, (masks_index_list[position] % 4) * 90)
-                    position += 1
-                    if position == number_of_used_masks:
-                        number_of_details_on_photo = detail_num
-                        id = photo_num
-                        break
-                vf = int(random.uniform(0, 2))
-                hf = int(random.uniform(0, 2))
-                vf = int(random.uniform(0, 2))
-                rot = int(random.uniform(0, 360))
+                j = int(random.uniform(0, len(self.all_details_names)))  # номер детали из комплекта
+                detail_name = self.all_details_names[j]
+                detail_path = get_detail_path_by_rect(detail_name, self.processed_path)
+                detail_image, mask_image = cv2.imread(detail_path), cv2.imread(detail_path)
+                detail_image, mask_image = self.apply_augmentations(detail_image, mask_image)
                 img, masks_array, d, detail_num, square = self.generate_new_photo(detail_num, id, detail_name, img, detail_image, mask_image,
-                                                    background, masks_array, count=number_of_details_on_photo, d=d, square=square, vert_flip=vf, horiz_flip=hf, rot=rot,
+                                                    background, masks_array, count=number_of_details_on_photo, d=d, square=square,
                                                     config_dict=config_dict)
             number_of_details_on_photo = detail_num
             file_name = f'image_{id}'
-            self.write_yolo_txt(d, file_name, number_of_details_on_photo, config_dict["generation_backs"]["yolo_folder"])
+            self.write_yolo_txt(d, file_name, number_of_details_on_photo, self.yolo_folder)
             img = resize_specific_width_and_height(img, self.final_width, self.final_height)
-            cv2.imwrite(f'{generation_folder}/{file_name}.jpg', img)
+            cv2.imwrite(f'{self.generation_folder}/{file_name}.jpg', img)
             id += 1
-            yield (position + 1) / number_of_used_masks
+            yield id / self.photo_num
 
 
 if __name__ == '__main__':

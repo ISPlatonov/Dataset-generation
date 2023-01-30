@@ -32,15 +32,7 @@ Item {
             Text {
                 x: 5
                 text: "Количество изображений"
-                // anchors.verticalCenter: parent.verticalCenter
-                // anchors.left: parent.left
             }
-            // Text {
-            //     // x: 5
-            //     // y: 25
-            //     text: "(optimal: no more than " + 200 / manager.max_details_on_photo + ")"
-            //     color: 'green'
-            // }
         }
         Rectangle {
             color: 'transparent'
@@ -121,8 +113,7 @@ Item {
                     }
                     previousText = text
                     var numericValue = getValue()
-                    manager.iou = text // Number(previousText)
-                    console.log("iou = " + text)
+                    manager.iou = text
                 }
                 function setValue(_value)
                 {
@@ -135,33 +126,7 @@ Item {
                 }
             }
         }
-        Rectangle {
-            color: 'transparent'
-            Layout.preferredWidth: 270
-            Layout.preferredHeight: 40
-            Text {
-                x: 5
-                text: "Максимальное количество рук\nна одном изображении"
-            }
-        }
-        Rectangle {
-            color: 'transparent'
-            Layout.preferredWidth: 100
-            Layout.preferredHeight: 40
-            TextField {
-                id: hand_field
-                validator: IntValidator {
-                    bottom: 1;
-                }
-                text: manager.max_hands_on_photo
-                anchors.centerIn: parent
-                horizontalAlignment: TextInput.AlignHCenter
-                maximumLength: 2
-                onTextEdited: {
-                    manager.max_hands_on_photo = text
-                }
-            }
-        }
+       
         Rectangle {
             color: 'transparent'
             Layout.preferredWidth: 270
@@ -200,13 +165,9 @@ Item {
         anchors.bottom: parent.bottom
         onClicked: { 
             step3photo_num.gotoGeneration(); 
-            console.log("iou === ", manager.iou);
             manager.rectangle_indicator = rectangle_check.checkState != 0 ? 1 : 0;
-            console.log("rectangle = ", manager.rectangle_indicator);
             manager.photo_num = parseInt(photo_num_field.text);
             manager.iou = parseFloat(iou_field.text);
-            console.log("photo_num = ", manager.photo_num);
-            manager.max_hands_on_photo = parseInt(hand_field.text)
 
         }
     }

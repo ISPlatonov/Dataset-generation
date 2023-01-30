@@ -28,6 +28,7 @@ Item {
             Layout.column: 0
         }
         Button {
+            id: button2
             text: qsTr("Запустить")
             
             Layout.row: 2
@@ -35,11 +36,14 @@ Item {
             Layout.rowSpan: 2
             onClicked: {
                 manager.backsGeneration()
+            button1.enabled = false
+            button2.enabled = false
                 
             }
         }
     }
     Button {
+        id: button1
         text: qsTr("Назад")
         width: (parent.width / 6)
         anchors.margins: 20
@@ -52,7 +56,7 @@ Item {
         anchors.fill: parent
     }
     Keys.onEnterPressed: {
-        manager.filtration()
+        // manager.filtration()
         manager.backsGeneration()
         step3generation.gotoMainView()
     }

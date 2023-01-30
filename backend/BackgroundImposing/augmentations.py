@@ -5,8 +5,8 @@ import numpy as np
 
 def resize_specific_width_and_height(img, width, height):
     dim = (width, height)
-    resized = cv2.resize(img, dim, interpolation=cv2.INTER_CUBIC)
-    return resized
+    img = cv2.resize(img, dim, interpolation=cv2.INTER_CUBIC)
+    return img
 
 
 def scale_image_in_percent(img, relation):
@@ -17,10 +17,17 @@ def scale_image_in_percent(img, relation):
     return resized
 
 
-def rotation(img, angle):
+def rotation90(img, angle):
     times_90 = angle / 90
     if times_90 > 0:
         img = np.rot90(img, times_90)
+    return img
+
+def rotation(img, angle):
+    #angle = int(random.uniform(-angle, angle))
+    h, w = img.shape[:2]
+    M = cv2.getRotationMatrix2D((int(w/2), int(h/2)), angle, 1)
+    img = cv2.warpAffine(img, M, (w, h))
     return img
 
 
@@ -51,14 +58,3 @@ def brightness(img, low, high):
     return img
 
 
-def apply_augmentations(detail, mask, vert_flip=0, horiz_flip=0, rot=0):
-    if vert_flip:
-        detail = vertical_flip(detail, 1)
-        mask = vertical_flip(mask, 1)
-    if horiz_flip:
-        detail = horizontal_flip(detail, 1)
-        mask = horizontal_flip(mask, 1)
-    if rotation:
-        detail = rotation(detail, rot)
-        mask = rotation(mask, rot)
-    return detail, mask

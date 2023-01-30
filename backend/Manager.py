@@ -80,35 +80,33 @@ class Manager(QObject):
         self._name_list = self._config['name_list']
         self.nameListChanged.emit()
         self._images_path = self._config['1_step']['raw_photos_path']
-        self.imagesPathChanged.emit()   # зачем?  good taste?
-        self.emptyTablePathChanged.emit()
+        self.imagesPathChanged.emit()
         
 
         self.hs = HandSegmentor(self._config)
         self.bg = BacksGeneration(self._config)
 
         self._iou = self._config['generation_backs']['iou']
-        self._max_hands_on_photo = self._config['generation_backs']['max_hands_on_photo']
         self._rectangle_indicator = self._config['generation_backs']['rectangle_indicator']
         self._max_details_on_photo = self._config['generation_backs']['max_details_on_photo']
         self._backsGenerationPercent = 0.
         self._camera_num = self._config["camera_num"]
         self._hsStatus = 0
-        if not os.path.exists(self._processed_path):
-            os.mkdir(self._processed_path)
         self._number_of_masks = self.count_masks() 
         self.get_mask_folders() 
         self.get_hand_folders()
 
         self._photo_num = int(self._number_of_masks * 4 / (self._max_details_on_photo / 2))  
-        if not os.path.exists(self._images_path):
-            os.mkdir(self._images_path)
+
 
     def count_masks(self):
         count = 0
-        for dir in os.listdir(self._processed_path):
-            if os.path.exists(self._processed_path + "/" + dir + "/" + dir + "_roi.jpg"):
-                count += 1
+        try:
+            for dir in os.listdir(self._processed_path):
+                if os.path.exists(self._processed_path + "/" + dir + "/" + dir + "_roi.jpg"):
+                    count += 1
+        except:
+            pass
         self._config['generation_backs']['number_of_masks'] = count
         return count
 
@@ -123,17 +121,23 @@ class Manager(QObject):
 
     def get_mask_folders(self):
         self._config['generation_backs']['all_mask_folders'] = []
-        for dir in os.listdir(self._processed_path):
-            if os.path.exists(self._processed_path + dir + "/" + dir + "_roi.jpg"):
-                self._config['generation_backs']['all_mask_folders'].append(dir)
+        try:
+            for dir in os.listdir(self._processed_path):
+                if os.path.exists(self._processed_path + dir + "/" + dir + "_roi.jpg"):
+                    self._config['generation_backs']['all_mask_folders'].append(dir)
+        except:
+            pass
         return self._config['generation_backs']['all_mask_folders']
 
 
     def get_hand_folders(self):
         self._config['generation_backs']['all_hand_folders'] = []
-        for dir in os.listdir(self._processed_path):
-            if os.path.exists(self._processed_path + dir + "/" + dir + "_continious_hand_bw_mask.jpg"):
-                self._config['generation_backs']['all_hand_folders'].append(dir)
+        try:
+            for dir in os.listdir(self._processed_path):
+                if os.path.exists(self._processed_path + dir + "/" + dir + "_continious_hand_bw_mask.jpg"):
+                    self._config['generation_backs']['all_hand_folders'].append(dir)
+        except:
+            pass
         return self._config['generation_backs']['all_hand_folders']
 
 
@@ -393,8 +397,11 @@ class Manager(QObject):
 
     @Slot("QVariant")
     def __set_iou(self, iou):
-        iou = iou.replace(',', '.')
-        self._iou = atof(iou)
+        try:
+            iou = iou.replace(',', '.')
+            self._iou = atof(iou)
+        except:
+            pass
         self._config['generation_backs']['iou'] = self._iou
         self.iouChanged.emit()
 
