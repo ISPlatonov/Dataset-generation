@@ -57,25 +57,28 @@ class BacksGeneration(Dict4Json):
         return approx
 
 
-    def generate_new_background(self, detail_num, detail_name, img, mask_gray, background1, sdvig_x, sdvig_y, rect):
+    def generate_new_background(self, detail_num, detail_name, img, mask_gray, background, sdvig_x, sdvig_y, rect):
         """
         Функция-посредник: при необходимости меняет размерность фона
         и добавляет новые элементы на фон.
         :param detail_num: int
         :param img: array
         :param mask_gray: array
-        :param background1: array
+        :param background: array
         :param sdvig_x: int
         :param sdvig_y: int
         :return: array, int
         """
         if (detail_num < 1):
-            background1 = resize_specific_width_and_height(background1, self.width, self.height)
-        background1, gt = self.add_object_on_background_by_rect(img, mask_gray, background1, sdvig_x, sdvig_y)
-        return background1, gt
+            background = resize_specific_width_and_height(background, self.width, self.height)
+        if self.rectangle_indicator:
+            background, gt = self.add_object_on_background_by_rect(img, mask_gray, background, sdvig_x, sdvig_y)
+        else:
+            background, gt = self.add_object_on_background_by_segm(img, mask_gray, background, sdvig_x, sdvig_y, rect)
+        return background, gt
 
 
-    def add_object_on_background_by_mask(self, img, mask_gray, background, sdvig_x, sdvig_y, rect):
+    def add_object_on_background_by_segm(self, img, mask_gray, background, sdvig_x, sdvig_y, rect):
         """
         Функция отрисовки новой детали на фоне.
         :param img: array
@@ -84,13 +87,14 @@ class BacksGeneration(Dict4Json):
         :param sdvig_x: int
         :param sdvig_y: int
         :return: array, array
-        """ 
-        cur_mask = self.get_mask(mask_gray, sdvig_x, sdvig_y)
+        """         
+        prev_mask = np.zeros((self.height, self.width))
         for i in range(int(rect[1]), int(rect[3])):
             for j in range(int(rect[0]), int(rect[2])):
                 if mask_gray[i - sdvig_y][j - sdvig_x] > 250:
                     background[i][j] = img[i - sdvig_y][j - sdvig_x]
-        return background, cur_mask
+                    prev_mask[i][j] = mask_gray[i - sdvig_y][j - sdvig_x]
+        return background, prev_mask
 
 
     def add_object_on_background_by_rect(self, img, mask_gray, background, sdvig_x, sdvig_y):
@@ -178,10 +182,21 @@ class BacksGeneration(Dict4Json):
         :return: array, array, dictionary, int
         """
         mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-        yolo_points = [0, 0, mask.shape[0], mask.shape[1]]  
-        sdvig_x, sdvig_y = self.get_shifts(img, mask)
-        rect = [yolo_points[0] + sdvig_y, yolo_points[1] + sdvig_x, yolo_points[2] + sdvig_y, yolo_points[3] + sdvig_x]
-        rect_for_iou = [yolo_points[1] + sdvig_x, yolo_points[0] + sdvig_y, yolo_points[3] + sdvig_x, yolo_points[2] + sdvig_y] 
+        if self.rectangle_indicator:
+            yolo_points = [0, 0, mask.shape[0], mask.shape[1]]  
+            sdvig_x, sdvig_y = self.get_shifts(img, mask)
+            rect = [yolo_points[0] + sdvig_y, yolo_points[1] + sdvig_x, yolo_points[2] + sdvig_y, yolo_points[3] + sdvig_x]
+            rect_for_iou = [yolo_points[1] + sdvig_x, yolo_points[0] + sdvig_y, yolo_points[3] + sdvig_x, yolo_points[2] + sdvig_y] 
+        else:
+            approx = self.get_approx(mask, detail_name)
+            if approx is np.nan:
+                print("Approx is empty")
+                return img, masks_array, d, detail_num, square
+            yolo_points = self.get_yolo_points(approx, self.rectangle_indicator)
+            sdvig_x, sdvig_y = self.get_shifts(img, mask)
+            rect = [yolo_points[0] + sdvig_x, yolo_points[1] + sdvig_y, yolo_points[2] + sdvig_x, yolo_points[3] + sdvig_y]
+            rect_for_iou = rect
+
         square += (yolo_points[2] - yolo_points[0]) * (yolo_points[3] - yolo_points[1])
 
         if detail_num == 0:
@@ -191,7 +206,10 @@ class BacksGeneration(Dict4Json):
             flag = self.check_iou(d, rect_for_iou, detail_num)
             if flag == 1:
                 d = self.writing_in_json(detail_num, img, detail_name, id, rect, count, d, self.all_details_names, config_dict)
-                img, masks_array[:, :, detail_num] = self.add_object_on_background_by_rect(detail, mask, img, sdvig_x, sdvig_y)
+                if self.rectangle_indicator:
+                    img, masks_array[:, :, detail_num] = self.add_object_on_background_by_rect(detail, mask, img, sdvig_x, sdvig_y)
+                else:
+                    img, masks_array[:, :, detail_num] = self.add_object_on_background_by_segm(detail, mask, img, sdvig_x, sdvig_y, rect)
             else:
                 return img, masks_array, d, detail_num, square
         return img, masks_array, d, detail_num + 1, square
@@ -252,9 +270,6 @@ class BacksGeneration(Dict4Json):
             self.number_of_used_masks = self.photo_num * self.max_details_on_photo
         
 
-
-
-
     def main_job(self, config_dict): # -> Generator[float, None, None]:
         '''Starts the main job of the class
         
@@ -281,8 +296,14 @@ class BacksGeneration(Dict4Json):
                     d = {}
                 j = int(random.uniform(0, len(self.all_details_names)))  # номер детали из комплекта
                 detail_name = self.all_details_names[j]
-                detail_path = get_detail_path_by_rect(detail_name, self.processed_path)
-                detail_image, mask_image = cv2.imread(detail_path), cv2.imread(detail_path)
+                if self.rectangle_indicator:
+                    detail_path = get_detail_path_by_rect(detail_name, self.processed_path)
+                    detail_image, mask_image = cv2.imread(detail_path), cv2.imread(detail_path)
+
+                else:
+                    detail_path, mask_path = get_detail_path_by_segm(detail_name, self.processed_path)
+                    detail_image, mask_image = cv2.imread(detail_path), cv2.imread(mask_path)
+
                 detail_image, mask_image = self.apply_augmentations(detail_image, mask_image)
                 img, masks_array, d, detail_num, square = self.generate_new_photo(detail_num, id, detail_name, img, detail_image, mask_image,
                                                     background, masks_array, count=number_of_details_on_photo, d=d, square=square,

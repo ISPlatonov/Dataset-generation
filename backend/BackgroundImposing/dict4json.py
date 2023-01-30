@@ -70,26 +70,41 @@ class Dict4Json:
         return part_dict
 
 
-    def get_yolo_points(self, points): 
+    def get_yolo_points(self, points, rect): 
         """
         Функция получения из множества точек, приближающих изображение,
         двух, которые заключат фигуру в прямоугольник.
         :param points: array
         :return:
         """
-        x, y = [], []
-        for i in range(points.shape[0]):
-            x.append((points[:][i][0])[1])  # выделили только х из переданного массива
-            y.append((points[:][i][0])[0])  # выделили только у из переданного массива
-        arr_x, arr_y = [], []
-        for i in x:
-            arr_x.append(int(i))
-        x = arr_x
-        for i in y:
-            arr_y.append(int(i))
-        y = arr_y
-        yolo_points = [float(min(x)), float(min(y)), float(max(x)), float(max(y))]
-        # 
+        if rect:
+            x, y = [], []
+            for i in range(points.shape[0]):
+                x.append((points[:][i][0])[1])  # выделили только х из переданного массива
+                y.append((points[:][i][0])[0])  # выделили только у из переданного массива
+            arr_x, arr_y = [], []
+            for i in x:
+                arr_x.append(int(i))
+            x = arr_x
+            for i in y:
+                arr_y.append(int(i))
+            y = arr_y
+            yolo_points = [float(min(x)), float(min(y)), float(max(x)), float(max(y))]
+
+        else:
+            x, y = [], []
+            for i in range(points.shape[0]):
+                x.append((points[:][i][0])[0])  # выделили только х из переданного массива
+                y.append((points[:][i][0])[1])  # выделили только у из переданного массива
+            arr_x, arr_y = [], []
+            for i in x:
+                arr_x.append(int(i))
+            x = arr_x
+            for i in y:
+                arr_y.append(int(i))
+            y = arr_y
+            yolo_points = [float(min(x)), float(min(y)), float(max(x)), float(max(y))]
+            return yolo_points
         
         return yolo_points
 
