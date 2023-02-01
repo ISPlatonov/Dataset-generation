@@ -13,7 +13,7 @@ class BacksGeneration(Dict4Json):
 
     def __init__(self, config):
         super().__init__(config)
-        self.processed_path = config['preprocessing']['processed_folder']
+        self.processed_folder = config['preprocessing']['processed_folder'][0]
         self.all_details_names = config['name_list']
         self.backgrounds = config['generation_backs']['backgrounds']
         self.generated_images = config['generation_backs']['generation_folder']
@@ -249,25 +249,35 @@ class BacksGeneration(Dict4Json):
 
     
     def define_names(self, config_dict):
-        self.processed_path = config_dict['preprocessing']['processed_folder']
-        self.backgrounds = config_dict['generation_backs']['backgrounds']
+        self.processed_folder = config_dict['generation_backs']['processed_folders'][0]  + '/'
+
+        self.backgrounds = config_dict['generation_backs']['backgrounds'] + '/'
         self.iou = config_dict['generation_backs']['iou']
         self.photo_num = int(config_dict['generation_backs']['photo_num'])
-        self.generation_folder = config_dict['generation_backs']['generation_folder']
-        self.yolo_folder = config_dict["generation_backs"]["yolo_folder"]
+        self.generation_folder = config_dict['generation_backs']['generation_folder'] + '/'
+        self.yolo_folder = config_dict["generation_backs"]["yolo_folder"] + '/'
         self.max_details_on_photo = config_dict['generation_backs']['max_details_on_photo']
         self.min_scaling = config_dict['generation_backs']['min_scaling']
         self.max_scaling = config_dict['generation_backs']['max_scaling']
         self.max_square = self.height * self.width
         self.rectangle_indicator = config_dict['generation_backs']['rectangle_indicator']
 
-        lst = sorted(os.listdir(self.processed_path))
+        lst = sorted(os.listdir(self.processed_folder))  # add general lst for all folders, not only one
         self.all_details_names = sorted(list(set(lst[i][:lst[i].rfind('_')] for i in range(len(lst)))))
         config_dict['name_list'] = self.all_details_names
+        # config_dict['name_list'] = os.listdir(self.raw_photos_path)
         self.define_dict_for_yolo(config_dict)
         self.number_of_used_masks = config_dict['generation_backs']['number_of_masks']
         if config_dict['generation_backs']['rectangle_indicator'] != 1:
             self.number_of_used_masks = self.photo_num * self.max_details_on_photo
+
+        self.processed_folders = []
+        self.folder_weights = []
+        for folder in config_dict['generation_backs']['processed_folders']:
+            self.processed_folders.append(folder + '/')
+            self.folder_weights.append(len(os.listdir(folder + '/')))
+
+
         
 
     def main_job(self, config_dict): # -> Generator[float, None, None]:
@@ -284,7 +294,7 @@ class BacksGeneration(Dict4Json):
         id = 0
         while id < self.photo_num:
             square = 0  # square of overlayed details
-            name_back = self.backgrounds + '/' + random.choice(os.listdir(self.backgrounds))
+            name_back = self.backgrounds + random.choice(os.listdir(self.backgrounds))
             background = cv2.imread(name_back)
             background = resize_specific_width_and_height(background, self.width, self.height)
             img = background
@@ -292,16 +302,24 @@ class BacksGeneration(Dict4Json):
             number_of_details_on_photo = int(random.uniform(1, self.max_details_on_photo) + 1)
             detail_num = 0
             while detail_num < number_of_details_on_photo and square < self.max_square:
+                id_folder = random.choices(range(len(self.processed_folders)), weights=self.folder_weights)[0]
+                self.processed_folder = self.processed_folders[id_folder]
+                print(f'self.processed_path {self.processed_folder}')
                 if detail_num == 0:
                     d = {}
                 j = int(random.uniform(0, len(self.all_details_names)))  # номер детали из комплекта
+                # if detail does no consist in processed folder, then pass this detail
                 detail_name = self.all_details_names[j]
                 if self.rectangle_indicator:
-                    detail_path = get_detail_path_by_rect(detail_name, self.processed_path)
-                    detail_image, mask_image = cv2.imread(detail_path), cv2.imread(detail_path)
+                    detail_path = get_detail_path_by_rect(detail_name, self.processed_folder)
+                    if detail_path == '':
+                        continue
+                    else:
+                        print(f'detail_path {detail_path}')
+                        detail_image, mask_image = cv2.imread(detail_path), cv2.imread(detail_path)
 
                 else:
-                    detail_path, mask_path = get_detail_path_by_segm(detail_name, self.processed_path)
+                    detail_path, mask_path = get_detail_path_by_segm(detail_name, self.processed_folder)
                     detail_image, mask_image = cv2.imread(detail_path), cv2.imread(mask_path)
 
                 detail_image, mask_image = self.apply_augmentations(detail_image, mask_image)

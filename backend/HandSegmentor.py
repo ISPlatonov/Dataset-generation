@@ -19,7 +19,12 @@ import pandas as pd
 class HandSegmentor:
 
     def __init__(self, config: dict):
-        self.root_dir_with_dirs = config["filepath"] 
+        self.raw_photos_path = config['1_step']['raw_photos_path']
+        self.roi_indicator = config['preprocessing']['roi_indicator']
+        self.hand_indicator = config['preprocessing']['hand_indicator']
+        self.mask_indicator = config['preprocessing']['mask_indicator']
+        self.processed_folder = config['preprocessing']['processed_folder']
+
         self.min_roi_height = config["roi"]["height"]
         self.min_roi_width = config["roi"]["width"]
         self.yolo_classificator_weigths_path = config["yolo_classificator_weigths_path"]
@@ -145,7 +150,7 @@ class HandSegmentor:
 
 
     def preprocessing_with_nn(self, config_dict, filepath, filename, output_dir,
-                            increment_hsStatus, increment, eps=200, show=False, save=True, need_hand=True):
+                            increment_hsStatus, increment):
         image_name = filename[:-4] 
         img = cv2.imread(filepath) 
         img_original = img.copy()
@@ -171,27 +176,27 @@ class HandSegmentor:
             os.makedirs(folder_name_path)
         except OSError as e:
             pass
-        if config_dict['preprocessing']['make_validation_dataset'] == 1:
-            folder_name = config_dict['preprocessing']['val_folder']
-            directory_name = config_dict['preprocessing']['val_points_folder']
-            img_resized = resize_specific_width_and_height(img, config_dict['preprocessing']['val_width'], config_dict['preprocessing']['val_height'])
-            cv2.imwrite(f'{folder_name}/img_{len(os.listdir(folder_name))}.jpg', img_resized)
-            category_id = self.labels.index(filename[:filename.rfind("_")])
-            print(f'labels: {self.labels}\nfilename: {filename.rfind("_")}\nid:{category_id}\n')
-            print(f'\n\npoints {points}\n\n')
-            self.create_yolo_for_validation(f'img_{len(os.listdir(folder_name))}', points, category_id, directory_name)
+        # if config_dict['preprocessing']['make_validation_dataset'] == 1:
+        #     folder_name = config_dict['preprocessing']['val_folder']
+        #     directory_name = config_dict['preprocessing']['val_points_folder']
+        #     img_resized = resize_specific_width_and_height(img, config_dict['preprocessing']['val_width'], config_dict['preprocessing']['val_height'])
+        #     cv2.imwrite(f'{folder_name}/img_{len(os.listdir(folder_name))}.jpg', img_resized)
+        #     category_id = self.labels.index(filename[:filename.rfind("_")])
+        #     print(f'labels: {self.labels}\nfilename: {filename.rfind("_")}\nid:{category_id}\n')
+        #     print(f'\n\npoints {points}\n\n')
+        #     self.create_yolo_for_validation(f'img_{len(os.listdir(folder_name))}', points, category_id, directory_name)
             
 
 
         cv2.imwrite(folder_name_path + '/{}.jpg'.format(image_name), img_original)
        
-        if config_dict['preprocessing']['roi_indicator']:
+        if self.roi_indicator:
             cv2.imwrite(folder_name_path + '/{}_roi.jpg'.format(image_name), roi)
        
-        if config_dict['preprocessing']['hand_indicator']:
+        if self.hand_indicator:
             self.getting_hand(config_dict, filename)
 
-        if config_dict['preprocessing']['mask_indicator']:
+        if self.mask_indicator:
             self.getting_mask(config_dict, filename, roi, points)
 
 
@@ -200,7 +205,7 @@ class HandSegmentor:
 
     def getting_hand(self, config_dict, filename):
         image_name = filename[:-4]
-        processed_path = config_dict['preprocessing']['processed_folder'] 
+        processed_path = self.processed_folder
         folder_name_path = processed_path + image_name + '/'
         x_landmark_coord, y_landmark_coord = [], []
         if os.path.exists(processed_path + image_name + "/" + filename):
@@ -263,7 +268,7 @@ class HandSegmentor:
 
     def getting_mask(self, config_dict, filename, roi, points):
         image_name = filename[:-4]
-        processed_path = config_dict['preprocessing']['processed_folder'] 
+        processed_path = self.processed_folder 
         folder_name_path = processed_path + image_name + '/'
         empty_table_path = "empty_table.jpg"
         YCrCb = cv2.cvtColor(roi, cv2.COLOR_BGR2YCR_CB)  # преобразуем в пространство YCrCb
@@ -299,35 +304,33 @@ class HandSegmentor:
         cv2.imwrite(folder_name_path + '/{}_detail_on_black_bg.jpg'.format(image_name), np.array(bw_mask))
 
 
-    def check_and_create_directories(self, config_dict):
-        if not os.path.exists(config_dict['preprocessing']['processed_folder']):
-            os.makedirs(config_dict['preprocessing']['processed_folder'])
+    def check_and_create_directories(self):
+        if not os.path.exists(self.processed_folder):
+            os.makedirs(self.processed_folder)
 
 
     def nn_labeling(self, config_dict, increment_hsStatus):
         photo_num = 0
-        self.labels = sorted(os.listdir(config_dict['1_step']['raw_photos_path']))
+        self.labels = sorted(os.listdir(self.raw_photos_path))
         for i in range(len(self.labels)):
-            my_path = config_dict['1_step']['raw_photos_path'] + self.labels[i] + "/"
+            my_path = self.raw_photos_path + self.labels[i] + '/'
             try:
                 photo_num += len(os.listdir(my_path))
             except:
                 pass
         increment = 1 / photo_num
         for i in range(len(self.labels)):
-            my_path = config_dict['1_step']['raw_photos_path'] + self.labels[i] + "/"
+            my_path = self.raw_photos_path + self.labels[i] + '/'
             for filename_batch in self.batch(os.listdir(my_path), os.cpu_count() - active_count()):
                 thread_batch = list()
                 for filename in filename_batch:
                     if filename[filename.rfind(".") + 1:] in ['jpg', 'png']:
-                        raw_detail_path = my_path + filename   # !!!
+                        raw_detail_path = my_path + filename
                         thread_batch.append(Thread(
                                                 target=self.preprocessing_with_nn,
                                                 args=(config_dict, raw_detail_path, filename, 
-                                                config_dict['preprocessing']['processed_folder']),
-                                                kwargs={'eps': 100, 'show': False, 'save': True,
-                                                'need_hand': config_dict['preprocessing']['hand_indicator'],
-                                                'increment_hsStatus': increment_hsStatus,
+                                                self.processed_folder),
+                                                kwargs={'increment_hsStatus': increment_hsStatus,
                                                 'increment': increment})
                                             )
                 for thread in thread_batch:
@@ -336,6 +339,14 @@ class HandSegmentor:
                     thread.join()
                 thread_batch.clear()
 
+
+    def define_names(self, config_dict):
+        self.raw_photos_path = config_dict['1_step']['raw_photos_path'] + '/'
+        self.processed_folder = config_dict['preprocessing']['processed_folder'] + '/'
+        self.roi_indicator = config_dict['preprocessing']['roi_indicator']
+        self.hand_indicator = config_dict['preprocessing']['hand_indicator']
+        self.mask_indicator = config_dict['preprocessing']['mask_indicator']
+        config_dict['name_list'] = os.listdir(self.raw_photos_path)
 
     def main_job(self, signal: Signal, increment_hsStatus: Function, config_dict) -> None:
         '''Starts the main job of the class
@@ -347,8 +358,8 @@ class HandSegmentor:
             increment_hsStatus (function): Function to increment the status of the job
         '''
         # DIRS
-        self.check_and_create_directories(config_dict)
-        config_dict['name_list'] = os.listdir(config_dict['1_step']['raw_photos_path'])
+        self.define_names(config_dict)
+        self.check_and_create_directories()
 
         # ROI-getting:
         self.nn_labeling(config_dict, increment_hsStatus)
