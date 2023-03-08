@@ -6,12 +6,8 @@ def get_detail_path_by_rect(detail_name, back_directory):
     """
     Функция генерации имени файла с изображением и его маски.
     """
-    try:
-        detail_folder = random.choice([x for x in os.listdir(back_directory) if x.find(detail_name) != -1])
-    except:
-        return ''
-    print(f'detail_folder {detail_folder}')
-    name = back_directory + detail_folder + '/' + detail_folder
+    detail_folder = random.choice([x for x in os.listdir(back_directory) if x.find(detail_name) != -1])
+    name = back_directory + '/' + detail_folder + '/' + detail_folder
     return f'{name}_roi.jpg'
 
 def get_detail_path_by_segm(detail_name, back_directory):
