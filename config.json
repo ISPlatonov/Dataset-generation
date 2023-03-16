@@ -41,7 +41,8 @@
                           "number_of_hand_masks": 0,
                           "all_mask_folders": [],
                           "min_scaling": 1,
-                          "max_scaling": 5
+                          "max_scaling": 5,
+                          "noise_folder": "noise"
                 },
     "max_number_of_details": 6,
     "graphics": {

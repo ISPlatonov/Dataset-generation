@@ -4,3 +4,5 @@ opencv_python==4.6.0.66
 Pillow==9.2.0
 pycocotools==2.0.4
 PySide6==6.3.2
+torchvision
+pandas
