@@ -94,8 +94,8 @@ class Dict4Json:
         else:
             x, y = [], []
             for i in range(points.shape[0]):
-                x.append((points[:][i][0])[0])  # выделили только х из переданного массива
-                y.append((points[:][i][0])[1])  # выделили только у из переданного массива
+                x.append((points[:][i][0])[1])  # выделили только х из переданного массива
+                y.append((points[:][i][0])[0])  # выделили только у из переданного массива
             arr_x, arr_y = [], []
             for i in x:
                 arr_x.append(int(i))
@@ -104,7 +104,6 @@ class Dict4Json:
                 arr_y.append(int(i))
             y = arr_y
             yolo_points = [float(min(x)), float(min(y)), float(max(x)), float(max(y))]
-            return yolo_points
         
         return yolo_points
 

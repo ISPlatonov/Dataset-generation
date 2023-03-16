@@ -2,10 +2,7 @@
     "yolo_classificator_weigths_path": "best_one_class.pt",
     "yolo_repo_path": "yolov5",
     "images_path": "images",
-    "name_list": ["batman", "bolshoy_grover", "bolshoy_podshipnik", "dvernoye_koltso", "grib", "koltso",
-    "krylo", "malenkiy_podshipnik", "nlo", "pruzhina", "roochka", "shesterenka", "sterzhen",
-    "tolstaya_gayka", "tolstaya_shaiba", "tolstoye_koltso", "tonkaya_gayka", "tonkaya_shaiba",
-    "vint", "vtulka"
+    "name_list": [ "0", "1", "2", "3", "4", "5", "6"
                  ],
 
     "filepath": "images/",
@@ -16,7 +13,7 @@
     "roi": { "height": 50,
              "width": 50
             },
-    "preprocessing": { "processed_folder": "imagesprocessed/",
+    "preprocessing": { "processed_folder": "segmentation/SG1/train/",
                        "roi_indicator": 1,
                        "mask_indicator": 1,
                        "hand_indicator": 1,
@@ -26,9 +23,9 @@
                        "make_validation_dataset": 0,
                        "val_width": 640,
                        "val_height": 480},
-    "generation_backs": { "generation_folder": "imagesgeneration/",
+    "generation_backs": { "generation_folder": "generation/datasets_with_noise/MS1/",
                           "yolo_folder": "yolo_points",
-                          "backgrounds": "backgrounds",
+                          "backgrounds": "backgrounds_gradients",
                           "photo_num": 10,
                           "iou": 0.2,
                           "max_details_on_photo": 5,
@@ -42,7 +39,9 @@
                           "all_mask_folders": [],
                           "min_scaling": 1,
                           "max_scaling": 5,
-                          "noise_folder": "noise"
+                          "noise_folder": "myasorubkaprocessed_val", 
+                          "noise_folders": ["myasorubkaprocessed_val"],
+                          "noise_rectangle_indicator": 1
                 },
     "max_number_of_details": 6,
     "graphics": {

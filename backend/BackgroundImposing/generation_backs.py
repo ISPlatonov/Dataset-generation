@@ -1,7 +1,6 @@
 from typing import Generator
 import numpy as np
 import cv2
-import time
 import json
 import os
 import random
@@ -25,6 +24,8 @@ class BacksGeneration(Dict4Json):
         self.final_width = config['generation_backs']['final_width']
         self.iou = config['generation_backs']['iou']
         self.noise_path = config['generation_backs']['noise_folder']
+        self.noise_folders = config['generation_backs']['noise_folders']
+        self.noise_rectangle_indicator = config['generation_backs']['noise_rectangle_indicator']
 
 
     def get_score(self, boxA, boxB):
@@ -98,7 +99,7 @@ class BacksGeneration(Dict4Json):
                     background[i][j] = img[i - sdvig_y][j - sdvig_x]
                     prev_mask[i][j] = mask_gray[i - sdvig_y][j - sdvig_x]
         return background, prev_mask
-
+    
 
     def add_object_on_background_by_rect(self, object, mask_gray, background, sdvig_x, sdvig_y):
         """
@@ -113,8 +114,44 @@ class BacksGeneration(Dict4Json):
         cur_mask = self.get_mask(mask_gray, sdvig_x, sdvig_y)
         for i in range(object.shape[0]):
             for j in range(object.shape[1]):
-                background[i + sdvig_y][j + sdvig_x] = object[i][j] 
+                background[i + sdvig_x][j + sdvig_y] = object[i][j] 
         return background, cur_mask
+    
+
+
+    def add_noise_object_on_background_by_segm(self, img, mask_gray, background, sdvig_x, sdvig_y):
+        """
+        Функция отрисовки новой noise детали на фоне.
+        :param img: array
+        :param mask_gray: array
+        :param background: array
+        :param sdvig_x: int
+        :param sdvig_y: int
+        :return: array, array
+        """         
+        for i in range(img.shape[0]):
+            for j in range(img.shape[1]):
+                if mask_gray[i][j] > 250:
+                    background[i + sdvig_x][j + sdvig_y] = img[i][j]
+        return background
+
+
+
+    def add_noise_object_on_background_by_rect(self, object, background, sdvig_x, sdvig_y):
+        """
+        Функция отрисовки новой детали на фоне.
+        :param object: array
+        :param mask_gray: array
+        :param background: array
+        :param sdvig_x: int
+        :param sdvig_y: int
+        :return: array, array
+        """ 
+        for i in range(object.shape[0]):
+            for j in range(object.shape[1]):
+                background[i + sdvig_x][j + sdvig_y] = object[i][j] 
+        return background
+    
 
     def get_mask(self, mask_gray, sdvig_x, sdvig_y):
         """
@@ -128,7 +165,7 @@ class BacksGeneration(Dict4Json):
         for i in range(mask_gray.shape[0]):
             for j in range(mask_gray.shape[1]):
                 if mask_gray[i][j] > 250:
-                    cur_mask[i + sdvig_y][j + sdvig_x] = 255
+                    cur_mask[i + sdvig_x][j + sdvig_y] = 255
         return cur_mask
 
 
@@ -139,8 +176,8 @@ class BacksGeneration(Dict4Json):
         :param mask_gray: array
         :return: int, int
         """
-        sdvig_y = int(random.uniform(0, background.shape[0] - mask_gray.shape[0]))
-        sdvig_x = int(random.uniform(0, background.shape[1] - mask_gray.shape[1]))
+        sdvig_x = int(random.uniform(0, background.shape[0] - mask_gray.shape[0]))
+        sdvig_y = int(random.uniform(0, background.shape[1] - mask_gray.shape[1]))
         return sdvig_x, sdvig_y
 
 
@@ -188,8 +225,8 @@ class BacksGeneration(Dict4Json):
         if self.rectangle_indicator:
             yolo_points = [0, 0, mask.shape[0], mask.shape[1]]  
             sdvig_x, sdvig_y = self.get_shifts(img, mask)
-            rect = [yolo_points[0] + sdvig_y, yolo_points[1] + sdvig_x, yolo_points[2] + sdvig_y, yolo_points[3] + sdvig_x]
-            rect_for_iou = [yolo_points[1] + sdvig_x, yolo_points[0] + sdvig_y, yolo_points[3] + sdvig_x, yolo_points[2] + sdvig_y] 
+            rect = [yolo_points[0] + sdvig_x, yolo_points[1] + sdvig_y, yolo_points[2] + sdvig_x, yolo_points[3] + sdvig_y]
+            rect_for_iou = [yolo_points[1] + sdvig_y, yolo_points[0] + sdvig_x, yolo_points[3] + sdvig_y, yolo_points[2] + sdvig_x] 
         else:
             approx = self.get_approx(mask)
             if approx is np.nan:
@@ -218,35 +255,31 @@ class BacksGeneration(Dict4Json):
         return img, masks_array, d, detail_num + 1, square
 
 
-    def apply_augmentations(self, detail, mask=-1, vert_flip=True, horiz_flip=True, rot=True, scale=True):
+    def apply_augmentations(self, detail, mask, vert_flip=True, horiz_flip=True, rot=True, scale=True, rectangle_indicator=1):
         if vert_flip:
             vf = int(random.uniform(0, 2))
             detail = vertical_flip(detail, vf)
-            if mask != -1:
-                mask = vertical_flip(mask, vf)
+            mask = vertical_flip(mask, vf)
         if horiz_flip:
             hf = int(random.uniform(0, 2))
             detail = horizontal_flip(detail, hf)
-            if mask != -1:
-                mask = horizontal_flip(mask, hf)
+            mask = horizontal_flip(mask, hf)
         if rotation:
-            if self.rectangle_indicator:
+            if rectangle_indicator:
                 angle = int(random.uniform(0, 4)) * 90
                 detail = rotation90(detail, angle)
-                if mask != -1:
-                    mask = rotation90(mask, angle)
+                mask = rotation90(mask, angle)
             else:
                 angle = int(random.uniform(0, 360))
                 detail = rotation(detail, angle)
-                if mask != -1:
-                    mask = rotation(mask, angle)
+                mask = rotation(mask, angle)
         if scale:
             proportion = float(random.uniform(self.min_scaling, self.max_scaling))
             detail = scale_image_in_percent(detail, proportion)
-            if mask != -1:
-                mask = scale_image_in_percent(mask, proportion)
+            mask = scale_image_in_percent(mask, proportion)
 
         return detail, mask
+
         
     def check_and_create_directories(self, config_dict):
         if not os.path.exists(config_dict['generation_backs']['generation_folder']):
@@ -277,48 +310,64 @@ class BacksGeneration(Dict4Json):
             self.number_of_used_masks = self.photo_num * self.max_details_on_photo
 
     
-    # def add_noise_detail(self, detail_image, background):
-    #     mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-    #     if self.rectangle_indicator:
-    #         yolo_points = [0, 0, mask.shape[0], mask.shape[1]]  
-    #         sdvig_x, sdvig_y = self.get_shifts(detail_image, mask)
-    #         rect = [yolo_points[0] + sdvig_y, yolo_points[1] + sdvig_x, yolo_points[2] + sdvig_y, yolo_points[3] + sdvig_x]
-    #     else:
-    #         approx = self.get_approx(mask)
-    #         # if approx is np.nan:
-    #         #     return img, -1
+    def add_noise_detail(self, detail, mask, background):
+        mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+        if self.rectangle_indicator:
+            yolo_points = [0, 0, mask.shape[0], mask.shape[1]]  
+            sdvig_x, sdvig_y = self.get_shifts(background, mask)
+            rect = [yolo_points[0] + sdvig_y, yolo_points[1] + sdvig_x, yolo_points[2] + sdvig_y, yolo_points[3] + sdvig_x]
+        else:
+            approx = self.get_approx(mask)
+            if approx is np.nan:
+                print("Approx is empty")
+                return background, 0
+            yolo_points = self.get_yolo_points(approx, self.noise_rectangle_indicator)
+            sdvig_x, sdvig_y = self.get_shifts(background, mask)
+            rect = [yolo_points[0] + sdvig_x, yolo_points[1] + sdvig_y, yolo_points[2] + sdvig_x, yolo_points[3] + sdvig_y]
 
-    #         yolo_points = self.get_yolo_points(approx, self.rectangle_indicator)
-    #         sdvig_x, sdvig_y = self.get_shifts(detail_image, mask)
-    #         rect = [yolo_points[0] + sdvig_x, yolo_points[1] + sdvig_y, yolo_points[2] + sdvig_x, yolo_points[3] + sdvig_y]
-
-    #     square += (yolo_points[2] - yolo_points[0]) * (yolo_points[3] - yolo_points[1])
-
-    #     if self.noise_rectangle_indicator:
-    #         background, _ = self.add_object_on_background_by_rect(detail_image, mask, background, sdvig_x, sdvig_y)
-    #     else:
-    #         background, _ = self.add_object_on_background_by_segm(detail_image, mask, background, sdvig_x, sdvig_y, rect)
-    #     return background
-
-    
-    # def get_noise_detail(self):
-    #     detail_path = self.noise_path + '/' + random.choice(os.listdir(self.noise_path))
-    #     return cv2.imread(detail_path)
+        if self.noise_rectangle_indicator:
+            background = self.add_noise_object_on_background_by_rect(detail, background, sdvig_x, sdvig_y)
+        else:
+            background = self.add_noise_object_on_background_by_segm(detail, mask, background, sdvig_x, sdvig_y)
+        
+        return background, 1
 
 
-    
-    # def overlay_noise(self, background):
-    #     # masks_array = np.zeros((self.height * self.width * 20)).reshape((self.height, self.width, 20))
-    #     number_of_details_on_photo = int(random.uniform(1, 10))
-    #     current_number = 0
-    #     while current_number < number_of_details_on_photo:
-    #         noise_detail = self.get_noise_detail(self.processed_path)
-    #         background = self.add_noise_detail(noise_detail, background)
-    #         detail_image, _ = self.apply_augmentations(detail_image)
-    #         background = self.add_noise_detail(detail_image)
-    #         current_number += 1
+    def overlay_noise(self, background):  
+        number_of_details_on_photo = int(random.uniform(1, 10))
+        current_number = 0
+        while current_number < number_of_details_on_photo:
+            print(f'current_number { current_number}')
+            id_folder = random.choices(range(len(self.noise_folders)))[0]
+            self.noise_folder = self.noise_folders[id_folder]
 
-    #     # return background
+            lst = sorted(os.listdir(self.noise_path))
+            all_noise_details_names = sorted(list(set(lst[i][:lst[i].rfind('_')] for i in range(len(lst)))))
+            j = int(random.uniform(0, len(all_noise_details_names)))
+            detail_name = all_noise_details_names[j]
+            if self.noise_rectangle_indicator:
+                detail_path = get_detail_path_by_rect(detail_name, self.noise_path)
+                if detail_path == '':
+                    continue
+                else:
+                    detail_image, mask_image = cv2.imread(detail_path), cv2.imread(detail_path)
+
+            else:
+                detail_path, mask_path = get_detail_path_by_segm(detail_name, self.noise_path)
+                if detail_path == '':
+                    continue
+                else:
+                    detail_image, mask_image = cv2.imread(detail_path), cv2.imread(mask_path)
+            print(f'detail_path {detail_path}')
+
+            detail_image, mask_image = self.apply_augmentations(detail_image, mask_image, rectangle_indicator=self.noise_rectangle_indicator)
+
+            background, ok = self.add_noise_detail(detail=detail_image, mask=mask_image, background=background)
+            if ok:
+                current_number += 1
+        print(f'overlay_noise is doine')
+        
+        return background
         
 
     def main_job(self, config_dict): # -> Generator[float, None, None]:
@@ -334,10 +383,12 @@ class BacksGeneration(Dict4Json):
         self.define_names(config_dict)
         id = 0
         while id < self.photo_num:
-            square = 0  # square of overlayed details
+            print(f'image_{id}')
+            square = 0
             name_back = self.backgrounds + '/' + random.choice(os.listdir(self.backgrounds))
             background = cv2.imread(name_back)
             background = resize_specific_width_and_height(background, self.width, self.height)
+            self.overlay_noise(background)
             img = background
             masks_array = np.zeros((self.height * self.width * 20)).reshape((self.height, self.width, 20))
             number_of_details_on_photo = int(random.uniform(1, self.max_details_on_photo) + 1)
@@ -355,7 +406,7 @@ class BacksGeneration(Dict4Json):
                     detail_path, mask_path = get_detail_path_by_segm(detail_name, self.processed_path)
                     detail_image, mask_image = cv2.imread(detail_path), cv2.imread(mask_path)
 
-                detail_image, mask_image = self.apply_augmentations(detail_image, mask_image)
+                detail_image, mask_image = self.apply_augmentations(detail_image, mask_image, rectangle_indicator=self.rectangle_indicator)
                 img, masks_array, d, detail_num, square = self.generate_new_photo(detail_num, id, detail_name, img, detail_image, mask_image,
                                                     background, masks_array, count=number_of_details_on_photo, d=d, square=square,
                                                     config_dict=config_dict)

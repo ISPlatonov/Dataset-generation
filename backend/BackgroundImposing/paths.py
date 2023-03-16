@@ -6,7 +6,10 @@ def get_detail_path_by_rect(detail_name, back_directory):
     """
     Функция генерации имени файла с изображением и его маски.
     """
-    detail_folder = random.choice([x for x in os.listdir(back_directory) if x.find(detail_name) != -1])
+    try:
+        detail_folder = random.choice([x for x in os.listdir(back_directory) if x.find(detail_name) != -1])
+    except:
+        return ''
     name = back_directory + '/' + detail_folder + '/' + detail_folder
     return f'{name}_roi.jpg'
 
@@ -14,7 +17,10 @@ def get_detail_path_by_segm(detail_name, back_directory):
     """
     Функция генерации имени файла с изображением и его маски.
     """
-    detail_folder = random.choice([x for x in os.listdir(back_directory) if x.find(detail_name) != -1 and os.path.exists(f'{back_directory}/{x}/{x}_detail_bw_mask.jpg')])
+    try:
+        detail_folder = random.choice([x for x in os.listdir(back_directory) if x.find(detail_name) != -1 and os.path.exists(f'{back_directory}/{x}/{x}_detail_bw_mask.jpg')])
+    except:
+        return '', ''
     name = back_directory + '/' + detail_folder + '/' + detail_folder
     return f'{name}_roi.jpg', f'{name}_detail_bw_mask.jpg'
 
@@ -22,7 +28,10 @@ def get_dst_path(back_directory):
     """
     Функция генерации имени файла с изображением и его маски.
     """
-    detail_folder = random.choice(os.listdir(back_directory))
+    try:
+        detail_folder = random.choice(os.listdir(back_directory))
+    except:
+        return ''
     name = back_directory + '/' + detail_folder + '/' + detail_folder
     return f'{name}_dst.jpg'
 
